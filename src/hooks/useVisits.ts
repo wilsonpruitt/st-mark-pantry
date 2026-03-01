@@ -1,4 +1,5 @@
 import { db } from '@/db/database';
+import { enqueue } from '@/lib/sync-queue';
 import type { Visit, PantryDay } from '@/types';
 import { isSameMonth } from '@/utils/dateHelpers';
 
@@ -12,16 +13,19 @@ export function useVisits() {
     dayOfWeek: PantryDay,
     servedBy?: string
   ): Promise<Visit> {
+    const now = new Date().toISOString();
     const visit: Visit = {
       id: crypto.randomUUID(),
       clientId,
       date,
       dayOfWeek,
       servedBy: servedBy?.trim() || undefined,
-      checkedInAt: new Date().toISOString(),
+      checkedInAt: now,
+      updatedAt: now,
     };
 
     await db.visits.add(visit);
+    enqueue('visits', visit.id, 'upsert', visit as unknown as Record<string, unknown>);
     return visit;
   }
 

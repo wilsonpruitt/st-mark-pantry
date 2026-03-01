@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db/database';
+import { enqueue } from '@/lib/sync-queue';
 import { Link } from 'react-router-dom';
 import { Search, UserPlus, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -156,14 +157,18 @@ export function CheckInPage() {
     async (client: Client) => {
       if (!selectedDay) return; // shouldn't happen if UI prevents it
       const visitId = crypto.randomUUID();
-      await db.visits.add({
+      const now = new Date().toISOString();
+      const visit = {
         id: visitId,
         clientId: client.id,
         date: selectedDate,
         dayOfWeek: selectedDay,
         servedBy: servedBy.trim() || undefined,
-        checkedInAt: new Date().toISOString(),
-      });
+        checkedInAt: now,
+        updatedAt: now,
+      };
+      await db.visits.add(visit);
+      enqueue('visits', visitId, 'upsert', visit as unknown as Record<string, unknown>);
       setSearchQuery('');
       setPendingClient(null);
       setShowWarning(false);

@@ -35,6 +35,7 @@ export interface Visit {
   servedBy?: string;
   notes?: string;
   checkedInAt: string; // ISO datetime for the timestamp display
+  updatedAt: string;
 }
 
 export interface Volunteer {
@@ -47,6 +48,7 @@ export interface Volunteer {
   recurringDays?: PantryDay[];       // deprecated, kept for backward compat
   recurringSlots?: string[];          // e.g. ['1st-Monday', 'every-Friday', '2nd-Saturday']
   createdAt: string;
+  updatedAt: string;
 }
 
 export interface VolunteerShift {
@@ -57,6 +59,7 @@ export interface VolunteerShift {
   hoursWorked?: number;
   role?: string;
   notes?: string;
+  updatedAt: string;
 }
 
 export interface VolunteerSignup {
@@ -67,6 +70,16 @@ export interface VolunteerSignup {
   role?: string;
   status: 'signed-up' | 'cancelled';
   createdAt: string;
+  updatedAt: string;
 }
 
 export type PantryDay = 'Monday' | 'Friday' | 'Saturday';
+
+export interface SyncQueueEntry {
+  seqNo?: number;
+  tableName: string;
+  recordId: string;
+  action: 'upsert' | 'delete';
+  payload?: Record<string, unknown>;
+  createdAt: string;
+}

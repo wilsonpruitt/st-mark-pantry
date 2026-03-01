@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db/database';
+import { enqueue } from '@/lib/sync-queue';
 import { useSettings } from '@/contexts/SettingsContext';
 import { apiPost } from '@/lib/api';
 import { Button } from '@/components/ui/button';
@@ -153,22 +154,30 @@ export function VolunteerSchedule() {
         .equals([selectedVolunteerId, signupDate])
         .first();
 
+      const now = new Date().toISOString();
       let signupId: string;
       if (existing) {
         // Update existing record to signed-up
-        await db.volunteerSignups.update(existing.id, { status: 'signed-up' });
+        await db.volunteerSignups.update(existing.id, { status: 'signed-up', updatedAt: now });
         signupId = existing.id;
+        const updated = await db.volunteerSignups.get(existing.id);
+        if (updated) {
+          enqueue('volunteerSignups', signupId, 'upsert', updated as unknown as Record<string, unknown>);
+        }
       } else {
         signupId = crypto.randomUUID();
-        await db.volunteerSignups.add({
+        const signup = {
           id: signupId,
           volunteerId: selectedVolunteerId,
           date: signupDate,
           dayOfWeek: signupDayOfWeek,
           role: selectedRole || undefined,
-          status: 'signed-up',
-          createdAt: new Date().toISOString(),
-        });
+          status: 'signed-up' as const,
+          createdAt: now,
+          updatedAt: now,
+        };
+        await db.volunteerSignups.add(signup);
+        enqueue('volunteerSignups', signupId, 'upsert', signup as unknown as Record<string, unknown>);
       }
 
       // Fire-and-forget API call for email notification
@@ -196,6 +205,7 @@ export function VolunteerSchedule() {
   }
 
   async function excuseRecurring(volunteerId: string, date: string, dayOfWeek: PantryDay) {
+    const now = new Date().toISOString();
     // Check if there's already a signup record for this volunteer+date
     const existing = await db.volunteerSignups
       .where('[volunteerId+date]')
@@ -203,16 +213,23 @@ export function VolunteerSchedule() {
       .first();
 
     if (existing) {
-      await db.volunteerSignups.update(existing.id, { status: 'cancelled' });
+      await db.volunteerSignups.update(existing.id, { status: 'cancelled', updatedAt: now });
+      const updated = await db.volunteerSignups.get(existing.id);
+      if (updated) {
+        enqueue('volunteerSignups', existing.id, 'upsert', updated as unknown as Record<string, unknown>);
+      }
     } else {
-      await db.volunteerSignups.add({
+      const signup = {
         id: crypto.randomUUID(),
         volunteerId,
         date,
         dayOfWeek,
-        status: 'cancelled',
-        createdAt: new Date().toISOString(),
-      });
+        status: 'cancelled' as const,
+        createdAt: now,
+        updatedAt: now,
+      };
+      await db.volunteerSignups.add(signup);
+      enqueue('volunteerSignups', signup.id, 'upsert', signup as unknown as Record<string, unknown>);
     }
 
     // Fire-and-forget cancellation notification
@@ -223,6 +240,7 @@ export function VolunteerSchedule() {
 
   async function removeSignup(signupId: string, volunteerId: string, date: string, dayOfWeek: string) {
     await db.volunteerSignups.delete(signupId);
+    enqueue('volunteerSignups', signupId, 'delete');
 
     // Fire-and-forget cancellation notification
     if (settings.notificationsEnabled) {

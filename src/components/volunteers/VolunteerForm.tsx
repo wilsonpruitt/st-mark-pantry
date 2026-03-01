@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { db } from '@/db/database';
-import { useSettings } from '@/contexts/SettingsContext';
-import { apiPost } from '@/lib/api';
+import { enqueue } from '@/lib/sync-queue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,7 +17,6 @@ const ORDINALS = ['1st', '2nd', '3rd', '4th', '5th'] as const;
 export function VolunteerForm() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { settings } = useSettings();
   const isEdit = Boolean(id);
 
   const [loading, setLoading] = useState(isEdit);
@@ -87,17 +85,10 @@ export function VolunteerForm() {
       };
 
       if (isEdit && id) {
-        await db.volunteers.update(id, volunteerData);
-
-        // Fire-and-forget sync to Supabase
-        if (settings.notificationsEnabled && volunteerData.email) {
-          apiPost('/api/volunteers/sync', {
-            id,
-            firstName: volunteerData.firstName,
-            lastName: volunteerData.lastName,
-            email: volunteerData.email,
-            recurringSlots: volunteerData.recurringSlots,
-          });
+        await db.volunteers.update(id, { ...volunteerData, updatedAt: now });
+        const updated = await db.volunteers.get(id);
+        if (updated) {
+          enqueue('volunteers', id, 'upsert', updated as unknown as Record<string, unknown>);
         }
 
         navigate('/');
@@ -106,19 +97,10 @@ export function VolunteerForm() {
           id: crypto.randomUUID(),
           ...volunteerData,
           createdAt: now,
+          updatedAt: now,
         };
         await db.volunteers.add(newVolunteer);
-
-        // Fire-and-forget sync to Supabase
-        if (settings.notificationsEnabled && volunteerData.email) {
-          apiPost('/api/volunteers/sync', {
-            id: newVolunteer.id,
-            firstName: volunteerData.firstName,
-            lastName: volunteerData.lastName,
-            email: volunteerData.email,
-            recurringSlots: volunteerData.recurringSlots,
-          });
-        }
+        enqueue('volunteers', newVolunteer.id, 'upsert', newVolunteer as unknown as Record<string, unknown>);
 
         navigate(`/volunteers/${newVolunteer.id}`);
       }

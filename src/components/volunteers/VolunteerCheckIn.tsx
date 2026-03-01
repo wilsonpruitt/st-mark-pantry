@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db/database';
+import { enqueue } from '@/lib/sync-queue';
 import { Link } from 'react-router-dom';
 import { Search, HandHeart, UserPlus, Briefcase } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -81,14 +82,17 @@ export function VolunteerCheckIn() {
     async (volunteer: Volunteer) => {
       if (!selectedDay) return;
       const role = selectedRoles.get(volunteer.id);
+      const now = new Date().toISOString();
       const shift: VolunteerShift = {
         id: crypto.randomUUID(),
         volunteerId: volunteer.id,
         date: today,
         dayOfWeek: selectedDay,
         role: role || undefined,
+        updatedAt: now,
       };
       await db.volunteerShifts.add(shift);
+      enqueue('volunteerShifts', shift.id, 'upsert', shift as unknown as Record<string, unknown>);
       setSearchQuery('');
       // Clear the role selection for this volunteer
       setSelectedRoles((prev) => {

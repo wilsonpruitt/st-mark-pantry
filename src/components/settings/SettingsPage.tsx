@@ -1,10 +1,10 @@
 import { useRef, useState } from 'react'
-import { Download, Upload, FileSpreadsheet, Info, Package, Bell, CloudUpload, CloudDownload } from 'lucide-react'
+import { Download, Upload, FileSpreadsheet, Info, Package, Bell, Cloud, RefreshCw } from 'lucide-react'
 import { db } from '@/db/database'
 import { exportMultiSheetExcel } from '@/lib/excel'
 import { useSettings } from '@/contexts/SettingsContext'
-import { apiPost } from '@/lib/api'
-import { syncFromCloud } from '@/lib/cloud-sync'
+import { syncEngine } from '@/lib/sync-engine'
+import { useSyncStatus } from '@/hooks/useSyncStatus'
 import { DataImport } from './DataImport'
 import { GoogleSheetsExport } from './GoogleSheetsExport'
 import { Button } from '@/components/ui/button'
@@ -20,10 +20,10 @@ import {
 
 export function SettingsPage() {
   const { settings, updateSettings } = useSettings()
+  const syncStatus = useSyncStatus()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [importing, setImporting] = useState(false)
   const [syncing, setSyncing] = useState(false)
-  const [syncingDown, setSyncingDown] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
   const showMessage = (type: 'success' | 'error', text: string) => {
@@ -93,50 +93,28 @@ export function SettingsPage() {
     }
   }
 
-  const syncAllVolunteers = async () => {
+  const handleSyncNow = async () => {
     setSyncing(true)
     try {
-      const volunteers = await db.volunteers.toArray()
-      if (volunteers.length === 0) {
-        showMessage('error', 'No volunteers to sync.')
-        return
-      }
-
-      const payload = volunteers.map((v) => ({
-        id: v.id,
-        firstName: v.firstName,
-        lastName: v.lastName,
-        email: v.email,
-        recurringDays: v.recurringDays,
-        recurringSlots: v.recurringSlots,
-      }))
-
-      const result = await apiPost('/api/volunteers/sync-all', { volunteers: payload })
-      if (result.ok) {
-        const data = result.data as { synced?: number; failed?: number }
-        showMessage('success', `Synced ${data.synced ?? volunteers.length} volunteers to cloud.`)
-      } else {
-        showMessage('error', result.error || 'Failed to sync volunteers.')
-      }
+      await syncEngine.sync()
+      showMessage('success', 'Sync completed successfully.')
     } catch {
-      showMessage('error', 'Failed to sync volunteers.')
+      showMessage('error', 'Sync failed. Will retry automatically.')
     } finally {
       setSyncing(false)
     }
   }
 
-  const handleSyncFromCloud = async () => {
-    setSyncingDown(true)
+  const handleFullResync = async () => {
+    setSyncing(true)
     try {
-      const result = await syncFromCloud()
-      showMessage(
-        'success',
-        `Synced from cloud: ${result.newVolunteers} new volunteers, ${result.updatedVolunteers} updated, ${result.newSignups} new signups.`
-      )
-    } catch (err) {
-      showMessage('error', err instanceof Error ? err.message : 'Failed to sync from cloud.')
+      syncEngine.resetLastSync()
+      await syncEngine.sync()
+      showMessage('success', 'Full re-sync completed.')
+    } catch {
+      showMessage('error', 'Re-sync failed.')
     } finally {
-      setSyncingDown(false)
+      setSyncing(false)
     }
   }
 
@@ -230,6 +208,55 @@ export function SettingsPage() {
         </CardContent>
       </Card>
 
+      {/* Cloud Sync */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Cloud className="size-4" />
+            Cloud Sync
+          </CardTitle>
+          <CardDescription>Sync data across devices via the cloud.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Status</span>
+              <span className="font-medium">{syncStatus.online ? 'Online' : 'Offline'}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Pending changes</span>
+              <span className="font-medium">{syncStatus.pendingCount}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Last synced</span>
+              <span className="font-medium">
+                {syncStatus.lastSyncAt
+                  ? new Date(syncStatus.lastSyncAt).toLocaleString()
+                  : 'Never'}
+              </span>
+            </div>
+          </div>
+          <Button
+            onClick={handleSyncNow}
+            variant="outline"
+            className="w-full justify-start"
+            disabled={syncing || !syncStatus.online}
+          >
+            <RefreshCw className={`size-4 ${syncing ? 'animate-spin' : ''}`} />
+            {syncing ? 'Syncing...' : 'Sync Now'}
+          </Button>
+          <Button
+            onClick={handleFullResync}
+            variant="outline"
+            className="w-full justify-start"
+            disabled={syncing || !syncStatus.online}
+          >
+            <RefreshCw className="size-4" />
+            Full Re-sync
+          </Button>
+        </CardContent>
+      </Card>
+
       {/* Email Notifications */}
       <Card>
         <CardHeader>
@@ -239,7 +266,7 @@ export function SettingsPage() {
           </CardTitle>
           <CardDescription>Send confirmation and reminder emails to volunteers.</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent>
           <div className="flex items-center justify-between gap-4">
             <div className="space-y-0.5">
               <Label htmlFor="notifications-toggle" className="text-sm font-medium">
@@ -257,28 +284,6 @@ export function SettingsPage() {
               }
             />
           </div>
-          {settings.notificationsEnabled && (
-            <>
-              <Button
-                onClick={syncAllVolunteers}
-                variant="outline"
-                className="w-full justify-start"
-                disabled={syncing}
-              >
-                <CloudUpload className="size-4" />
-                {syncing ? 'Syncing...' : 'Sync All Volunteers to Cloud'}
-              </Button>
-              <Button
-                onClick={handleSyncFromCloud}
-                variant="outline"
-                className="w-full justify-start"
-                disabled={syncingDown}
-              >
-                <CloudDownload className="size-4" />
-                {syncingDown ? 'Syncing...' : 'Sync from Cloud'}
-              </Button>
-            </>
-          )}
         </CardContent>
       </Card>
 
@@ -338,7 +343,7 @@ export function SettingsPage() {
         <CardContent className="space-y-1 text-sm text-muted-foreground">
           <p className="font-medium text-foreground">St. Mark Legacy Food Pantry</p>
           <p>Version v1.0.0</p>
-          <p>All data is stored locally on this device.</p>
+          <p>Data is stored locally and synced to the cloud.</p>
         </CardContent>
       </Card>
     </div>

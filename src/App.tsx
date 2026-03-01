@@ -1,6 +1,6 @@
 import { useState, useEffect, Component } from 'react'
 import { Routes, Route, Link } from 'react-router-dom'
-import { syncFromCloud } from '@/lib/cloud-sync'
+import { syncEngine } from '@/lib/sync-engine'
 import { AppShell } from '@/components/layout/AppShell'
 import { DashboardPage } from '@/components/dashboard/DashboardPage'
 import { CheckInPage } from '@/components/checkin/CheckInPage'
@@ -130,7 +130,9 @@ function LoginGate({ children }: { children: React.ReactNode }) {
 
 export function App() {
   useEffect(() => {
-    syncFromCloud().catch(() => {/* offline or API unavailable — ignore */});
+    syncEngine.sync().catch(() => {});
+    syncEngine.startPolling(30_000);
+    return () => syncEngine.stopPolling();
   }, []);
 
   return (

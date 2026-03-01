@@ -93,6 +93,7 @@ export async function syncFromCloud(): Promise<SyncResult> {
     }
 
     // New volunteer
+    const now = new Date().toISOString();
     await db.volunteers.add({
       id: sv.id,
       firstName: sv.first_name,
@@ -101,7 +102,8 @@ export async function syncFromCloud(): Promise<SyncResult> {
       phone: sv.phone || undefined,
       recurringDays: sv.recurring_days as PantryDay[],
       recurringSlots: sv.recurring_slots,
-      createdAt: new Date().toISOString(),
+      createdAt: now,
+      updatedAt: now,
     });
     idMap[sv.id] = sv.id;
     newVolunteers++;
@@ -125,6 +127,7 @@ export async function syncFromCloud(): Promise<SyncResult> {
       role: ss.role || undefined,
       status: ss.status as 'signed-up' | 'cancelled',
       createdAt: ss.created_at,
+      updatedAt: ss.created_at,
     });
     newSignups++;
   }

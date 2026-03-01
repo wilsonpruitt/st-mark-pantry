@@ -1,5 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db/database';
+import { enqueue } from '@/lib/sync-queue';
 import type { Client, Address, FamilyMember } from '@/types';
 
 interface AddClientInput {
@@ -45,6 +46,7 @@ export function useClients() {
     };
 
     await db.clients.add(client);
+    enqueue('clients', client.id, 'upsert', client as unknown as Record<string, unknown>);
     return client;
   }
 
@@ -65,15 +67,25 @@ export function useClients() {
     }
 
     await db.clients.update(id, updates);
+    const updated = await db.clients.get(id);
+    if (updated) {
+      enqueue('clients', id, 'upsert', updated as unknown as Record<string, unknown>);
+    }
   }
 
   async function deleteClient(id: string): Promise<void> {
+    // Collect visit IDs before deleting so we can enqueue them
+    const visits = await db.visits.where('clientId').equals(id).toArray();
+
     await db.transaction('rw', [db.clients, db.visits], async () => {
-      // Delete all visits for this client first
       await db.visits.where('clientId').equals(id).delete();
-      // Then delete the client
       await db.clients.delete(id);
     });
+
+    enqueue('clients', id, 'delete');
+    for (const visit of visits) {
+      enqueue('visits', visit.id, 'delete');
+    }
   }
 
   async function getClient(id: string): Promise<Client | undefined> {
