@@ -18,7 +18,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { StatCard } from './StatCard';
-import { getTodayISO, getMonthRange, getWeekRange, offsetMonth, formatTime } from '@/utils/dateHelpers';
+import { getTodayISO, getMonthRange, getWeekRange, offsetMonth, getDaysAgoISO, formatTime } from '@/utils/dateHelpers';
 
 const quickActions = [
   { to: '/checkin', label: 'Start Check-In', icon: ClipboardCheck, color: 'bg-green-500' },
@@ -68,17 +68,17 @@ export function DashboardPage() {
     return new Set(monthVisits.map((v) => v.clientId)).size;
   }, [allVisits, monthStart, monthEnd]);
 
-  // Clients who haven't visited this month (only for current month)
-  const currentMonthRange = getMonthRange();
-  const inactiveThisMonth = useMemo(() => {
+  // Clients who haven't visited in the last 30 days
+  const thirtyDaysAgo = getDaysAgoISO(30);
+  const inactiveLast30 = useMemo(() => {
     if (!clients || !allVisits) return 0;
-    const visitedThisMonth = new Set(
+    const visitedRecently = new Set(
       allVisits
-        .filter((v) => v.date >= currentMonthRange.start && v.date <= currentMonthRange.end)
+        .filter((v) => v.date >= thirtyDaysAgo)
         .map((v) => v.clientId)
     );
-    return clients.filter((c) => !visitedThisMonth.has(c.id)).length;
-  }, [clients, allVisits, currentMonthRange.start, currentMonthRange.end]);
+    return clients.filter((c) => !visitedRecently.has(c.id)).length;
+  }, [clients, allVisits, thirtyDaysAgo]);
 
   // Recent check-ins today (last 5)
   const recentCheckIns = useMemo(() => {
@@ -119,7 +119,7 @@ export function DashboardPage() {
     year: 'numeric',
   });
 
-  const isCurrentMonth = monthStart === currentMonthRange.start;
+  const isCurrentMonth = monthStart === getMonthRange().start;
 
   return (
     <div className="mx-auto max-w-2xl space-y-6 pb-24">
@@ -226,7 +226,7 @@ export function DashboardPage() {
       </Card>
 
       {/* Inactive Clients Teaser */}
-      {inactiveThisMonth > 0 && (
+      {inactiveLast30 > 0 && (
         <Link
           to="/reports/inactive"
           className="flex items-center gap-3 rounded-xl border border-yellow-200 bg-yellow-50 p-4 transition-colors hover:bg-yellow-100 dark:border-yellow-900 dark:bg-yellow-950 dark:hover:bg-yellow-900/50"
@@ -236,7 +236,7 @@ export function DashboardPage() {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
-              {inactiveThisMonth} client{inactiveThisMonth !== 1 ? 's' : ''} not visited this month
+              {inactiveLast30} client{inactiveLast30 !== 1 ? 's' : ''} not visited in 30 days
             </p>
             <p className="text-xs text-yellow-600 dark:text-yellow-400">
               Tap to view inactive client report
