@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ArrowLeft, ClipboardCheck, HandHeart, CalendarPlus, ChevronRight, Printer } from 'lucide-react';
+import { ArrowLeft, ClipboardCheck, HandHeart, CalendarPlus, ChevronRight, Printer, QrCode } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -154,6 +154,21 @@ export function VolunteerGuide() {
           </Link>
         </CardContent>
       </Card>
+
+      {/* QR Code Print Link */}
+      <Link
+        to="/qr-print"
+        className="flex items-center gap-3 rounded-lg border p-4 text-sm font-medium hover:bg-muted print:hidden"
+      >
+        <QrCode className="size-5 text-primary" />
+        <div className="flex-1">
+          <p>Print QR Codes</p>
+          <p className="font-normal text-muted-foreground">
+            Printable sheet of QR codes that open the pantry app
+          </p>
+        </div>
+        <ChevronRight className="size-4 text-muted-foreground" />
+      </Link>
     </div>
   );
 }
