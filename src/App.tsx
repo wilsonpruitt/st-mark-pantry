@@ -16,6 +16,7 @@ import { VolunteerCalendar } from '@/components/volunteers/VolunteerCalendar'
 import { ReportsPage } from '@/components/reports/ReportsPage'
 import { InactiveClientsPage } from '@/components/reports/InactiveClientsPage'
 import { SettingsPage } from '@/components/settings/SettingsPage'
+import { VolunteerGuide } from '@/components/guide/VolunteerGuide'
 
 class ErrorBoundary extends Component<{ children: React.ReactNode }, { error: Error | null }> {
   state: { error: Error | null } = { error: null }
@@ -155,6 +156,7 @@ export function App() {
         <Route path="volunteers/:id/edit" element={<VolunteerForm />} />
         <Route path="reports" element={<ReportsPage />} />
         <Route path="reports/inactive" element={<InactiveClientsPage />} />
+        <Route path="guide" element={<VolunteerGuide />} />
         <Route path="settings" element={<SettingsPage />} />
         <Route path="*" element={<NotFound />} />
       </Route>

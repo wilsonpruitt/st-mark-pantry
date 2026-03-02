@@ -189,6 +189,30 @@ export function formatSlot(slot: string): string {
   return `${ordinal} ${day}`;
 }
 
+/**
+ * Returns the start (Monday) and end (Sunday) of the week containing the given date.
+ */
+export function getWeekRange(date?: string): { start: string; end: string } {
+  const d = date ? parseLocalDate(date) : new Date();
+  const dayOfWeek = d.getDay(); // 0=Sun, 1=Mon, ...
+  const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+  const monday = new Date(d);
+  monday.setDate(d.getDate() + diffToMonday);
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  return { start: formatISO(monday), end: formatISO(sunday) };
+}
+
+/**
+ * Returns a 'YYYY-MM-DD' string for the first day of a month offset from a reference.
+ * E.g. offsetMonth('2026-03-15', -1) → '2026-02-01'
+ */
+export function offsetMonth(refDate: string, offset: number): string {
+  const d = parseLocalDate(refDate);
+  d.setMonth(d.getMonth() + offset, 1);
+  return formatISO(d);
+}
+
 // ---- Helpers ----
 
 /**

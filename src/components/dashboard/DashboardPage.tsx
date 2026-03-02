@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db/database';
@@ -10,23 +10,31 @@ import {
   BarChart3,
   UserX,
   ChevronRight,
+  ChevronLeft,
   Calendar,
+  BookOpen,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { StatCard } from './StatCard';
-import { getTodayISO, getMonthRange, formatTime } from '@/utils/dateHelpers';
+import { getTodayISO, getMonthRange, getWeekRange, offsetMonth, formatTime } from '@/utils/dateHelpers';
 
 const quickActions = [
   { to: '/checkin', label: 'Start Check-In', icon: ClipboardCheck, color: 'bg-green-500' },
   { to: '/clients/new', label: 'Register Client', icon: UserPlus, color: 'bg-blue-500' },
   { to: '/volunteers', label: 'Volunteers', icon: HandHeart, color: 'bg-purple-500' },
   { to: '/reports', label: 'View Reports', icon: BarChart3, color: 'bg-amber-500' },
+  { to: '/guide', label: 'Volunteer Guide', icon: BookOpen, color: 'bg-teal-500' },
 ];
 
 export function DashboardPage() {
   const today = getTodayISO();
-  const { start: monthStart, end: monthEnd } = getMonthRange();
+  const { start: weekStart, end: weekEnd } = getWeekRange();
+
+  // Month navigation state — defaults to current month
+  const [monthRef, setMonthRef] = useState(today);
+  const { start: monthStart, end: monthEnd } = getMonthRange(monthRef);
 
   const clients = useLiveQuery(() => db.clients.toArray());
   const todaysVisits = useLiveQuery(
@@ -39,10 +47,13 @@ export function DashboardPage() {
   );
   const allVisits = useLiveQuery(() => db.visits.toArray());
 
-  const todayClientCount = useMemo(() => {
-    if (!todaysVisits) return 0;
-    return new Set(todaysVisits.map((v) => v.clientId)).size;
-  }, [todaysVisits]);
+  const weeklyClientCount = useMemo(() => {
+    if (!allVisits) return 0;
+    const weekVisits = allVisits.filter(
+      (v) => v.date >= weekStart && v.date <= weekEnd
+    );
+    return new Set(weekVisits.map((v) => v.clientId)).size;
+  }, [allVisits, weekStart, weekEnd]);
 
   const todayVolunteerCount = useMemo(() => {
     if (!todaysShifts) return 0;
@@ -57,16 +68,17 @@ export function DashboardPage() {
     return new Set(monthVisits.map((v) => v.clientId)).size;
   }, [allVisits, monthStart, monthEnd]);
 
-  // Clients who haven't visited this month
+  // Clients who haven't visited this month (only for current month)
+  const currentMonthRange = getMonthRange();
   const inactiveThisMonth = useMemo(() => {
     if (!clients || !allVisits) return 0;
     const visitedThisMonth = new Set(
       allVisits
-        .filter((v) => v.date >= monthStart && v.date <= monthEnd)
+        .filter((v) => v.date >= currentMonthRange.start && v.date <= currentMonthRange.end)
         .map((v) => v.clientId)
     );
     return clients.filter((c) => !visitedThisMonth.has(c.id)).length;
-  }, [clients, allVisits, monthStart, monthEnd]);
+  }, [clients, allVisits, currentMonthRange.start, currentMonthRange.end]);
 
   // Recent check-ins today (last 5)
   const recentCheckIns = useMemo(() => {
@@ -101,21 +113,57 @@ export function DashboardPage() {
     );
   }
 
-  const currentMonthLabel = new Date().toLocaleDateString('en-US', {
+  const monthDate = new Date(Number(monthRef.split('-')[0]), Number(monthRef.split('-')[1]) - 1, 1);
+  const monthLabel = monthDate.toLocaleDateString('en-US', {
     month: 'long',
     year: 'numeric',
   });
+
+  const isCurrentMonth = monthStart === currentMonthRange.start;
 
   return (
     <div className="mx-auto max-w-2xl space-y-6 pb-24">
       <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-2 sm:gap-3">
-        <StatCard icon={Users} label="Today's Clients" value={todayClientCount} />
+      <div className="grid grid-cols-2 gap-2 sm:gap-3">
+        <StatCard icon={Users} label="This Week's Clients" value={weeklyClientCount} />
         <StatCard icon={HandHeart} label="Today's Volunteers" value={todayVolunteerCount} />
-        <StatCard icon={Calendar} label={`${currentMonthLabel} Clients`} value={monthlyUniqueClients} />
       </div>
+
+      {/* Monthly stat with arrows */}
+      <Card className="py-4">
+        <CardContent className="flex items-center justify-between px-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-8"
+            onClick={() => setMonthRef(offsetMonth(monthRef, -1))}
+            aria-label="Previous month"
+          >
+            <ChevronLeft className="size-4" />
+          </Button>
+          <div className="flex items-center gap-3">
+            <div className="flex size-8 sm:size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+              <Calendar className="size-4 sm:size-5 text-primary" />
+            </div>
+            <div className="min-w-0 text-center">
+              <p className="text-xl sm:text-2xl font-bold leading-none">{monthlyUniqueClients}</p>
+              <p className="text-[11px] sm:text-xs text-muted-foreground mt-1 leading-tight">{monthLabel} Clients</p>
+            </div>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-8"
+            onClick={() => setMonthRef(offsetMonth(monthRef, 1))}
+            disabled={isCurrentMonth}
+            aria-label="Next month"
+          >
+            <ChevronRight className="size-4" />
+          </Button>
+        </CardContent>
+      </Card>
 
       {/* Quick Actions */}
       <section className="space-y-2">
