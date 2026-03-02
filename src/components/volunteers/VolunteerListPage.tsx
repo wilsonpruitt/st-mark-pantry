@@ -32,36 +32,38 @@ export function VolunteerListPage() {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold">Volunteers</h1>
-          <span className="text-muted-foreground text-sm">
-            ({allVolunteers.length} volunteer{allVolunteers.length !== 1 ? 's' : ''})
-          </span>
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold">Volunteers</h1>
+            <span className="text-muted-foreground text-sm">
+              ({allVolunteers.length} volunteer{allVolunteers.length !== 1 ? 's' : ''})
+            </span>
+          </div>
+          <Button asChild>
+            <Link to="/volunteers/new">
+              <UserPlus className="size-4" />
+              Add
+            </Link>
+          </Button>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" asChild>
+        <div className="flex items-center gap-2 overflow-x-auto">
+          <Button variant="outline" size="sm" asChild>
             <Link to="/volunteers/calendar">
               <Calendar className="size-4" />
               Calendar
             </Link>
           </Button>
-          <Button variant="outline" asChild>
+          <Button variant="outline" size="sm" asChild>
             <Link to="/volunteers/schedule">
               <CalendarDays className="size-4" />
               Schedule
             </Link>
           </Button>
-          <Button variant="outline" asChild>
+          <Button variant="outline" size="sm" asChild>
             <Link to="/volunteers/checkin">
               <ClipboardCheck className="size-4" />
               Check In
-            </Link>
-          </Button>
-          <Button asChild>
-            <Link to="/volunteers/new">
-              <UserPlus className="size-4" />
-              Add
             </Link>
           </Button>
         </div>
@@ -98,7 +100,7 @@ export function VolunteerListPage() {
               <Card className="py-3 px-4 hover:bg-accent/50 transition-colors cursor-pointer">
                 <div className="flex items-center justify-between gap-3">
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <span className="font-medium truncate">
                         {volunteer.firstName} {volunteer.lastName}
                       </span>

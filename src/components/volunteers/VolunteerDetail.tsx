@@ -84,8 +84,8 @@ export function VolunteerDetail() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
+      <div className="flex items-center justify-between gap-2">
+        <Button variant="ghost" size="sm" className="shrink-0" onClick={() => navigate(-1)}>
           <ArrowLeft className="size-4" />
           Back
         </Button>
@@ -93,7 +93,7 @@ export function VolunteerDetail() {
           <Button variant="outline" size="sm" asChild>
             <Link to={`/volunteers/${id}/edit`}>
               <Pencil className="size-4" />
-              Edit
+              <span className="hidden sm:inline">Edit</span>
             </Link>
           </Button>
 
@@ -101,7 +101,7 @@ export function VolunteerDetail() {
             <DialogTrigger asChild>
               <Button variant="destructive" size="sm">
                 <Trash2 className="size-4" />
-                Delete
+                <span className="hidden sm:inline">Delete</span>
               </Button>
             </DialogTrigger>
             <DialogContent>
