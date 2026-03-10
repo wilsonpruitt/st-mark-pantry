@@ -66,13 +66,13 @@ export function ClientForm() {
       setLastName(client.lastName);
       setPhone(client.phone ?? '');
       setEmail(client.email ?? '');
-      setAddress(client.address);
+      setAddress(client.address ?? { ...EMPTY_ADDRESS });
       setNotes(client.notes ?? '');
       setAcceptsPerishables(client.acceptsPerishables !== false);
-      setFamilyMembers(client.familyMembers);
+      setFamilyMembers(client.familyMembers ?? []);
 
       // Check if family size was manually overridden
-      const autoSize = 1 + client.familyMembers.length;
+      const autoSize = 1 + (client.familyMembers ?? []).length;
       if (client.numberInFamily !== autoSize) {
         setOverrideFamilySize(true);
         setManualFamilySize(client.numberInFamily);
@@ -103,7 +103,7 @@ export function ClientForm() {
       (c) =>
         c.firstName.toLowerCase() === normalizedFirst &&
         c.lastName.toLowerCase() === normalizedLast &&
-        (normalizedStreet === '' || c.address.street.toLowerCase() === normalizedStreet)
+        (normalizedStreet === '' || (c.address?.street ?? '').toLowerCase() === normalizedStreet)
     );
 
     setDuplicate(match ?? null);
@@ -216,7 +216,7 @@ export function ClientForm() {
                 <AlertDescription className="flex items-center justify-between gap-2">
                   <span className="text-yellow-800 dark:text-yellow-200">
                     A client named {duplicate.firstName} {duplicate.lastName}
-                    {duplicate.address.street && ` at ${duplicate.address.street}`} already exists.
+                    {duplicate.address?.street && ` at ${duplicate.address.street}`} already exists.
                     Continue anyway?
                   </span>
                   <Button

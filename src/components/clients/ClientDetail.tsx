@@ -90,12 +90,12 @@ export function ClientDetail() {
   }
 
   const fullName = `${client.firstName} ${client.lastName}`;
-  const hasAddress =
-    client.address.street || client.address.city || client.address.state || client.address.zip;
+  const addr = client.address ?? { street: '', city: '', state: '', zip: '' };
+  const hasAddress = addr.street || addr.city || addr.state || addr.zip;
   const addressParts = [
-    client.address.street,
-    [client.address.city, client.address.state].filter(Boolean).join(', '),
-    client.address.zip,
+    addr.street,
+    [addr.city, addr.state].filter(Boolean).join(', '),
+    addr.zip,
   ].filter(Boolean);
 
   return (
@@ -216,7 +216,7 @@ export function ClientDetail() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {client.familyMembers.length === 0 ? (
+          {!client.familyMembers || client.familyMembers.length === 0 ? (
             <p className="text-sm text-muted-foreground">No family members listed</p>
           ) : (
             <div className="space-y-2">

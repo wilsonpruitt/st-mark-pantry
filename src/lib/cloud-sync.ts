@@ -83,8 +83,8 @@ export async function syncFromCloud(): Promise<SyncResult> {
           firstName: sv.first_name,
           lastName: sv.last_name,
           phone: sv.phone || undefined,
-          recurringDays: sv.recurring_days as PantryDay[],
-          recurringSlots: sv.recurring_slots,
+          recurringDays: (sv.recurring_days || []) as PantryDay[],
+          recurringSlots: sv.recurring_slots || [],
         });
         idMap[sv.id] = emailMatch.id;
         updatedVolunteers++;

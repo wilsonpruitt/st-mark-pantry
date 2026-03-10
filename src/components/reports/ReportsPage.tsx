@@ -144,13 +144,13 @@ export function ReportsPage() {
       'Last Name': c.lastName,
       Phone: c.phone || '',
       Email: c.email || '',
-      Street: c.address.street,
-      City: c.address.city,
-      State: c.address.state,
-      ZIP: c.address.zip,
+      Street: c.address?.street ?? '',
+      City: c.address?.city ?? '',
+      State: c.address?.state ?? '',
+      ZIP: c.address?.zip ?? '',
       'Family Size': c.numberInFamily,
       Notes: c.notes || '',
-      'Created At': c.createdAt,
+      'Created At': c.createdAt ?? '',
     }));
     await exportToExcel(rows, `clients-${today}.xlsx`, 'Clients');
   };

@@ -88,7 +88,7 @@ export function ClientListPage() {
                     </div>
                     <div className="flex items-center gap-3 mt-0.5 text-sm text-muted-foreground">
                       {client.phone && <span>{client.phone}</span>}
-                      {client.address.city && client.address.state && (
+                      {client.address?.city && client.address?.state && (
                         <span>
                           {client.address.city}, {client.address.state}
                         </span>

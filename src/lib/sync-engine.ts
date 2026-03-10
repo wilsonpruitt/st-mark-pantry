@@ -240,8 +240,13 @@ class SyncEngine {
       if (record.deletedAt) {
         await table.delete(id).catch(() => {});
 
-        // For clients, also cascade-delete visits
+        // For clients, also cascade-delete visits and enqueue the deletions
         if (_tableName === 'clients') {
+          const orphanedVisits = await db.visits.where('clientId').equals(id).toArray().catch(() => []);
+          for (const visit of orphanedVisits) {
+            const { enqueue } = await import('@/lib/sync-queue');
+            await enqueue('visits', visit.id, 'delete');
+          }
           await db.visits.where('clientId').equals(id).delete().catch(() => {});
         }
         continue;

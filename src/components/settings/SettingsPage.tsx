@@ -69,12 +69,13 @@ export function SettingsPage() {
         throw new Error('Invalid backup file format.')
       }
 
-      await db.transaction('rw', [db.clients, db.visits, db.volunteers, db.volunteerShifts, db.volunteerSignups], async () => {
+      await db.transaction('rw', [db.clients, db.visits, db.volunteers, db.volunteerShifts, db.volunteerSignups, db.syncQueue], async () => {
         await db.clients.clear()
         await db.visits.clear()
         await db.volunteers.clear()
         await db.volunteerShifts.clear()
         await db.volunteerSignups.clear()
+        await db.syncQueue.clear()
 
         if (data.clients?.length) await db.clients.bulkAdd(data.clients)
         if (data.visits?.length) await db.visits.bulkAdd(data.visits)
@@ -82,6 +83,10 @@ export function SettingsPage() {
         if (data.volunteerShifts?.length) await db.volunteerShifts.bulkAdd(data.volunteerShifts)
         if (data.volunteerSignups?.length) await db.volunteerSignups.bulkAdd(data.volunteerSignups)
       })
+
+      // Reset sync state so imported data gets properly synced
+      localStorage.removeItem('pantry-cloud-seeded')
+      syncEngine.resetLastSync()
 
       const signupCount = data.volunteerSignups?.length ?? 0
       showMessage('success', `Imported ${data.clients.length} clients, ${data.visits.length} visits, ${signupCount} signups.`)
@@ -129,13 +134,13 @@ export function SettingsPage() {
         'Last Name': c.lastName,
         Phone: c.phone || '',
         Email: c.email || '',
-        Street: c.address.street,
-        City: c.address.city,
-        State: c.address.state,
-        ZIP: c.address.zip,
+        Street: c.address?.street ?? '',
+        City: c.address?.city ?? '',
+        State: c.address?.state ?? '',
+        ZIP: c.address?.zip ?? '',
         'Family Size': c.numberInFamily,
         Notes: c.notes || '',
-        'Created At': c.createdAt,
+        'Created At': c.createdAt ?? '',
       }))
 
       const visitRows = visits.map((v) => ({
