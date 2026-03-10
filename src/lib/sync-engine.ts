@@ -69,11 +69,37 @@ class SyncEngine {
     return headers;
   }
 
+  /** Re-authenticate to obtain the API key if missing or expired */
+  private async ensureApiKey(): Promise<void> {
+    if (localStorage.getItem('pantry-api-key')) return;
+
+    // Use the known password to get the API key from the server
+    const authed = localStorage.getItem('pantry-auth');
+    if (!authed) return; // Not logged in at all
+
+    try {
+      const res = await fetch('/api/auth/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: 'stmark' }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.apiKey) localStorage.setItem('pantry-api-key', data.apiKey);
+      }
+    } catch {
+      // Offline — skip, will retry next sync
+    }
+  }
+
   async sync(): Promise<void> {
     if (this.syncing || !navigator.onLine) return;
     this.syncing = true;
 
     try {
+      // Ensure we have an API key before syncing
+      await this.ensureApiKey();
+
       // One-time initial seed: push all local data on first sync
       if (!localStorage.getItem(SEEDED_KEY)) {
         await this.seedInitialData();
@@ -126,11 +152,22 @@ class SyncEngine {
       payload: entry.payload,
     }));
 
-    const res = await fetch('/api/sync/push', {
+    let res = await fetch('/api/sync/push', {
       method: 'POST',
       headers: this.getHeaders(),
       body: JSON.stringify({ mutations }),
     });
+
+    // If 401, re-authenticate and retry once
+    if (res.status === 401) {
+      localStorage.removeItem('pantry-api-key');
+      await this.ensureApiKey();
+      res = await fetch('/api/sync/push', {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify({ mutations }),
+      });
+    }
 
     if (!res.ok) {
       throw new Error(`Push failed: ${res.status}`);
@@ -152,7 +189,15 @@ class SyncEngine {
       ? `/api/sync/pull?since=${encodeURIComponent(since)}`
       : '/api/sync/pull';
 
-    const res = await fetch(url, { headers: this.getHeaders() });
+    let res = await fetch(url, { headers: this.getHeaders() });
+
+    // If 401, re-authenticate and retry once
+    if (res.status === 401) {
+      localStorage.removeItem('pantry-api-key');
+      await this.ensureApiKey();
+      res = await fetch(url, { headers: this.getHeaders() });
+    }
+
     if (!res.ok) {
       throw new Error(`Pull failed: ${res.status}`);
     }
