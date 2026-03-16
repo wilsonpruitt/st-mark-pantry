@@ -22,9 +22,10 @@ import { getTodayISO, getMonthRange, getWeekRange, offsetMonth, getDaysAgoISO, f
 
 const quickActions = [
   { to: '/checkin', label: 'Start Check-In', icon: ClipboardCheck, color: 'bg-green-500' },
+  { to: '/volunteers/checkin', label: 'Volunteer Check-In', icon: HandHeart, color: 'bg-purple-500' },
   { to: '/clients/new', label: 'Register Client', icon: UserPlus, color: 'bg-blue-500' },
-  { to: '/volunteers', label: 'Volunteers', icon: HandHeart, color: 'bg-purple-500' },
   { to: '/reports', label: 'View Reports', icon: BarChart3, color: 'bg-amber-500' },
+  { to: '/volunteers', label: 'Volunteers', icon: Users, color: 'bg-indigo-500' },
   { to: '/guide', label: 'Volunteer Guide', icon: BookOpen, color: 'bg-teal-500' },
 ];
 
