@@ -7,6 +7,7 @@ import { syncEngine } from '@/lib/sync-engine'
 import { useSyncStatus } from '@/hooks/useSyncStatus'
 import { DataImport } from './DataImport'
 import { GoogleSheetsExport } from './GoogleSheetsExport'
+import { MonthlyReportRecipients } from './MonthlyReportRecipients'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
@@ -336,6 +337,9 @@ export function SettingsPage() {
 
       {/* Google Sheets Export */}
       <GoogleSheetsExport />
+
+      {/* Monthly Report Recipients */}
+      <MonthlyReportRecipients />
 
       {/* About */}
       <Card>

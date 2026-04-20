@@ -124,6 +124,121 @@ export function publicConfirmationEmail(
   };
 }
 
+export interface MonthlyReportStats {
+  monthLabel: string;        // e.g. "March 2026"
+  totalVisits: number;
+  uniqueHouseholds: number;
+  uniqueClients: number;     // same as households at the client level
+  totalIndividualsServed: number; // sum of numberInFamily for each visit
+  newClients: number;        // clients whose createdAt falls in the month
+  byDay: { date: string; dayOfWeek: string; visits: number; individuals: number }[];
+  familySizeBuckets: { label: string; count: number }[];
+  perishablesEligible: number;
+  perishablesRestricted: number;
+}
+
+export function monthlyReportEmail(stats: MonthlyReportStats): { subject: string; html: string } {
+  const {
+    monthLabel,
+    totalVisits,
+    uniqueHouseholds,
+    totalIndividualsServed,
+    newClients,
+    byDay,
+    familySizeBuckets,
+    perishablesEligible,
+    perishablesRestricted,
+  } = stats;
+
+  const byDayRows = byDay
+    .map(
+      (d) =>
+        `<tr>
+          <td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;color:#374151;font-size:13px;">${formatDateNice(d.date, d.dayOfWeek)}</td>
+          <td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;color:#374151;font-size:13px;text-align:right;">${d.visits}</td>
+          <td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;color:#374151;font-size:13px;text-align:right;">${d.individuals}</td>
+        </tr>`
+    )
+    .join('');
+
+  const familyRows = familySizeBuckets
+    .map(
+      (b) =>
+        `<tr>
+          <td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;color:#374151;font-size:13px;">${b.label}</td>
+          <td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;color:#374151;font-size:13px;text-align:right;">${b.count}</td>
+        </tr>`
+    )
+    .join('');
+
+  return {
+    subject: `St. Mark Food Pantry — ${monthLabel} Report`,
+    html: baseTemplate(`${monthLabel} Report`, `
+      <h2 style="margin:0 0 12px;color:#1f2937;font-size:20px;">${monthLabel} Summary</h2>
+      <p style="margin:0 0 16px;color:#374151;font-size:14px;">Here is the monthly activity report for the St. Mark Legacy Food Pantry.</p>
+
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;">
+        <tr>
+          <td style="padding:10px 12px;background-color:#f0fdf4;border-radius:6px;">
+            <p style="margin:0;color:#166534;font-size:12px;text-transform:uppercase;letter-spacing:0.05em;">Total Visits</p>
+            <p style="margin:4px 0 0;color:#14532d;font-size:22px;font-weight:700;">${totalVisits}</p>
+          </td>
+        </tr>
+      </table>
+
+      <table width="100%" cellpadding="8" cellspacing="0" style="margin:0 0 20px;">
+        <tr>
+          <td style="background-color:#eff6ff;border-radius:6px;padding:10px 12px;width:33%;">
+            <p style="margin:0;color:#1e40af;font-size:12px;text-transform:uppercase;">Households</p>
+            <p style="margin:4px 0 0;color:#1e3a8a;font-size:18px;font-weight:700;">${uniqueHouseholds}</p>
+          </td>
+          <td style="width:4px;"></td>
+          <td style="background-color:#fef3c7;border-radius:6px;padding:10px 12px;width:33%;">
+            <p style="margin:0;color:#92400e;font-size:12px;text-transform:uppercase;">Individuals</p>
+            <p style="margin:4px 0 0;color:#78350f;font-size:18px;font-weight:700;">${totalIndividualsServed}</p>
+          </td>
+          <td style="width:4px;"></td>
+          <td style="background-color:#ede9fe;border-radius:6px;padding:10px 12px;width:33%;">
+            <p style="margin:0;color:#5b21b6;font-size:12px;text-transform:uppercase;">New Clients</p>
+            <p style="margin:4px 0 0;color:#4c1d95;font-size:18px;font-weight:700;">${newClients}</p>
+          </td>
+        </tr>
+      </table>
+
+      <h3 style="margin:20px 0 8px;color:#1f2937;font-size:16px;">By Session</h3>
+      <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:0 0 20px;">
+        <thead>
+          <tr>
+            <th style="padding:6px 8px;border-bottom:2px solid #d1d5db;text-align:left;color:#6b7280;font-size:12px;text-transform:uppercase;">Date</th>
+            <th style="padding:6px 8px;border-bottom:2px solid #d1d5db;text-align:right;color:#6b7280;font-size:12px;text-transform:uppercase;">Visits</th>
+            <th style="padding:6px 8px;border-bottom:2px solid #d1d5db;text-align:right;color:#6b7280;font-size:12px;text-transform:uppercase;">People</th>
+          </tr>
+        </thead>
+        <tbody>${byDayRows || '<tr><td colspan="3" style="padding:8px;color:#6b7280;font-size:13px;">No sessions this month.</td></tr>'}</tbody>
+      </table>
+
+      <h3 style="margin:20px 0 8px;color:#1f2937;font-size:16px;">Household Size</h3>
+      <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:0 0 20px;">
+        <thead>
+          <tr>
+            <th style="padding:6px 8px;border-bottom:2px solid #d1d5db;text-align:left;color:#6b7280;font-size:12px;text-transform:uppercase;">Size</th>
+            <th style="padding:6px 8px;border-bottom:2px solid #d1d5db;text-align:right;color:#6b7280;font-size:12px;text-transform:uppercase;">Households</th>
+          </tr>
+        </thead>
+        <tbody>${familyRows || '<tr><td colspan="2" style="padding:8px;color:#6b7280;font-size:13px;">—</td></tr>'}</tbody>
+      </table>
+
+      <h3 style="margin:20px 0 8px;color:#1f2937;font-size:16px;">Perishables</h3>
+      <p style="margin:0;color:#374151;font-size:14px;">
+        Eligible: <strong>${perishablesEligible}</strong> &middot;
+        Restricted: <strong>${perishablesRestricted}</strong>
+      </p>
+
+      <p style="margin:24px 0 0;color:#6b7280;font-size:12px;">This report is generated automatically on the 1st of each month.</p>
+    `),
+  };
+}
+
 export function cancellationEmail(
   firstName: string,
   date: string,
