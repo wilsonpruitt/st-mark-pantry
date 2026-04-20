@@ -138,16 +138,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
-    // Check for already-sent reminders (dedup)
+    // Check for already-sent reminders (dedup). Skip the query entirely when
+    // there's nobody to remind — avoids a sentinel `__none__` that could
+    // theoretically collide with a real volunteer id.
     const volunteerIds = Array.from(toRemind.keys());
-    const { data: alreadySent } = await getSupabase()
-      .from('notifications')
-      .select('volunteer_id')
-      .in('volunteer_id', volunteerIds.length > 0 ? volunteerIds : ['__none__'])
-      .eq('session_date', targetDate)
-      .eq('type', 'reminder');
-
-    const alreadySentIds = new Set((alreadySent || []).map((n) => n.volunteer_id));
+    const alreadySentIds = new Set<string>();
+    if (volunteerIds.length > 0) {
+      const { data: alreadySent } = await getSupabase()
+        .from('notifications')
+        .select('volunteer_id')
+        .in('volunteer_id', volunteerIds)
+        .eq('session_date', targetDate)
+        .eq('type', 'reminder');
+      for (const n of alreadySent || []) alreadySentIds.add(n.volunteer_id);
+    }
 
     let sent = 0;
     let skipped = 0;
@@ -185,6 +189,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       await sleep(600);
     }
 
+    console.log(
+      `[cron/reminders] targetDate=${targetDate} day=${dayOfWeek} sent=${sent} skipped=${skipped} failed=${failed}`
+    );
     return res.status(200).json({ ok: true, targetDate, dayOfWeek, sent, skipped, failed });
   } catch (err) {
     console.error('Cron reminders error:', err);

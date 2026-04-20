@@ -118,7 +118,16 @@ export function fromDB(
     if (camelKey) {
       // Ensure array fields are always arrays, never null
       if (ARRAY_FIELDS.has(camelKey)) {
-        out[camelKey] = Array.isArray(value) ? value : [];
+        if (Array.isArray(value)) {
+          out[camelKey] = value;
+        } else {
+          if (value != null) {
+            console.warn(
+              `[fromDB] Expected array for ${tableName}.${camelKey}, got ${typeof value}; coercing to []`
+            );
+          }
+          out[camelKey] = [];
+        }
       } else {
         out[camelKey] = value ?? undefined;
       }

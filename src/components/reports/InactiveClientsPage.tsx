@@ -7,7 +7,7 @@ import { ArrowLeft, Download, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { getTodayISO, getDaysAgoISO, formatDate } from '@/utils/dateHelpers';
+import { getTodayISO, getDaysAgoISO, formatDate, parseLocalDate } from '@/utils/dateHelpers';
 
 const THRESHOLDS = [30, 60, 90] as const;
 
@@ -46,7 +46,7 @@ export function InactiveClientsPage() {
         const lastVisit = lastVisitMap.get(c.id);
         const daysSince = lastVisit
           ? Math.floor(
-              (new Date(today).getTime() - new Date(lastVisit).getTime()) /
+              (parseLocalDate(today).getTime() - parseLocalDate(lastVisit).getTime()) /
                 (1000 * 60 * 60 * 24)
             )
           : null;

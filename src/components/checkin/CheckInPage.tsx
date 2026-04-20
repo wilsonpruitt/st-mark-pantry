@@ -3,25 +3,17 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db/database';
 import { enqueue } from '@/lib/sync-queue';
 import { Link } from 'react-router-dom';
-import { Search, UserPlus, AlertTriangle } from 'lucide-react';
+import { Search, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from '@/components/ui/dialog';
 import { useSettings } from '@/contexts/SettingsContext';
 import { searchClients } from '@/utils/search';
-import { getTodayISO, formatDate } from '@/utils/dateHelpers';
+import { getTodayISO } from '@/utils/dateHelpers';
 import TodaysList from './TodaysList';
 import { ItemsReceivedDialog } from './ItemsReceivedDialog';
-import type { Client, PantryDay, Visit, Volunteer } from '@/types';
+import type { Client, PantryDay, Volunteer } from '@/types';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -44,22 +36,6 @@ function detectPantryDay(): PantryDay | null {
   if (dow === 5) return 'Friday';
   if (dow === 6) return 'Saturday';
   return null;
-}
-
-/** Get the last visit for a client in the same calendar month as `currentDate`. */
-async function getLastVisitThisMonth(
-  clientId: string,
-  currentDate: string
-): Promise<Visit | null> {
-  const monthStart = currentDate.substring(0, 7) + '-01'; // YYYY-MM-01
-  const visits = await db.visits
-    .where('clientId')
-    .equals(clientId)
-    .and((v) => v.date >= monthStart && v.date <= currentDate)
-    .toArray();
-  if (visits.length === 0) return null;
-  visits.sort((a, b) => b.date.localeCompare(a.date));
-  return visits[0];
 }
 
 // ---------------------------------------------------------------------------
@@ -89,20 +65,10 @@ export function CheckInPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const searchRef = useRef<HTMLInputElement>(null);
 
-  // --- Warning dialog state ---
-  const [showWarning, setShowWarning] = useState(false);
-  const [pendingClient, setPendingClient] = useState<Client | null>(null);
-  const [lastVisitDate, setLastVisitDate] = useState<string | null>(null);
-
   // --- Items received dialog state ---
   const [itemsDialogOpen, setItemsDialogOpen] = useState(false);
   const [lastVisitId, setLastVisitId] = useState('');
   const [lastClientName, setLastClientName] = useState('');
-
-  // --- Monthly visit cache for search results ---
-  const [monthlyVisitMap, setMonthlyVisitMap] = useState<
-    Map<string, string>
-  >(new Map());
 
   // Auto-focus search on mount
   useEffect(() => {
@@ -150,31 +116,6 @@ export function CheckInPage() {
     return set;
   }, [todaysVisits]);
 
-  // When search results change, pre-fetch their monthly visit status
-  useEffect(() => {
-    let cancelled = false;
-    async function fetchMonthlyVisits() {
-      const map = new Map<string, string>();
-      await Promise.all(
-        searchResults.map(async (client) => {
-          const visit = await getLastVisitThisMonth(client.id, selectedDate);
-          if (visit && !cancelled) {
-            map.set(client.id, visit.date);
-          }
-        })
-      );
-      if (!cancelled) setMonthlyVisitMap(map);
-    }
-    if (searchResults.length > 0) {
-      fetchMonthlyVisits();
-    } else {
-      setMonthlyVisitMap(new Map());
-    }
-    return () => {
-      cancelled = true;
-    };
-  }, [searchResults, selectedDate]);
-
   // --- Check-in logic ---
   const doCheckIn = useCallback(
     async (client: Client) => {
@@ -193,8 +134,6 @@ export function CheckInPage() {
       await db.visits.add(visit);
       enqueue('visits', visitId, 'upsert', visit as unknown as Record<string, unknown>);
       setSearchQuery('');
-      setPendingClient(null);
-      setShowWarning(false);
 
       // Show items dialog if inventory tracking is enabled
       if (settings.inventoryEnabled) {
@@ -209,18 +148,9 @@ export function CheckInPage() {
   const handleCheckIn = useCallback(
     async (client: Client) => {
       if (!selectedDay) return;
-
-      // Check for monthly duplicate
-      const lastVisit = await getLastVisitThisMonth(client.id, selectedDate);
-      if (lastVisit) {
-        setPendingClient(client);
-        setLastVisitDate(lastVisit.date);
-        setShowWarning(true);
-        return;
-      }
       await doCheckIn(client);
     },
-    [selectedDate, selectedDay, doCheckIn]
+    [selectedDay, doCheckIn]
   );
 
   // --- Render ---
@@ -299,10 +229,6 @@ export function CheckInPage() {
                 <ul className="divide-y divide-border">
                   {searchResults.map((client) => {
                     const alreadyToday = checkedInTodaySet.has(client.id);
-                    const monthlyVisitDate = monthlyVisitMap.get(client.id);
-                    // Don't show monthly warning if the only visit this month is today's
-                    const showMonthlyWarning =
-                      monthlyVisitDate && monthlyVisitDate !== selectedDate;
 
                     return (
                       <li
@@ -316,12 +242,6 @@ export function CheckInPage() {
                               ({client.numberInFamily} in family)
                             </span>
                           </p>
-                          {showMonthlyWarning && (
-                            <span className="inline-flex items-center gap-1 rounded-md bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300">
-                              <AlertTriangle className="size-3 shrink-0" />
-                              Visited {formatDate(monthlyVisitDate)}
-                            </span>
-                          )}
                           {client.acceptsPerishables === false && (
                             <Badge variant="outline" className="border-blue-300 text-blue-700 dark:text-blue-300">
                               No Perishables
@@ -387,52 +307,6 @@ export function CheckInPage() {
         />
       )}
 
-      {/* ---- Monthly duplicate warning dialog ---- */}
-      <Dialog open={showWarning} onOpenChange={setShowWarning}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="size-5 text-warning-foreground" />
-              Duplicate Visit This Month
-            </DialogTitle>
-            <DialogDescription asChild>
-              <div>
-                {pendingClient && lastVisitDate && (
-                  <p>
-                    <span className="font-semibold text-foreground">
-                      {pendingClient.firstName} {pendingClient.lastName}
-                    </span>{' '}
-                    already visited on{' '}
-                    <span className="font-semibold text-foreground">
-                      {formatDate(lastVisitDate)}
-                    </span>
-                    . Are you sure you want to check them in again?
-                  </p>
-                )}
-              </div>
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setShowWarning(false);
-                setPendingClient(null);
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              className="bg-success hover:bg-success/90 text-success-foreground"
-              onClick={() => {
-                if (pendingClient) doCheckIn(pendingClient);
-              }}
-            >
-              Check In Anyway
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

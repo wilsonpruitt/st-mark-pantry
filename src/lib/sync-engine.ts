@@ -138,7 +138,10 @@ class SyncEngine {
     this.status = { ...this.status, state: 'pushing' };
     this.notify();
 
-    // Deduplicate: for same table+id, keep the latest entry
+    // Deduplicate: for same table+id, keep the latest entry.
+    // entries are pre-sorted by seqNo, so Map.set overwrites older writes
+    // with newer ones. A trailing delete correctly wins over prior upserts;
+    // a trailing upsert wins over a prior delete (re-created with same id).
     const deduped = new Map<string, typeof entries[0]>();
     for (const entry of entries) {
       const key = `${entry.tableName}:${entry.recordId}`;
@@ -262,14 +265,18 @@ class SyncEngine {
         }
       }
 
-      // Last-write-wins: only apply if remote is newer
+      // Last-write-wins: only apply if remote is strictly newer.
+      // Parse as Date to avoid string-compare surprises when clocks differ
+      // in offset formatting (e.g. "+00:00" vs "Z"). On tie, server wins.
       const local = await table.get(id);
       if (local) {
         const localUpdated = (local as Record<string, unknown>).updatedAt as string | undefined;
         const remoteUpdated = cleanRecord.updatedAt as string | undefined;
+        const localMs = localUpdated ? Date.parse(localUpdated) : NaN;
+        const remoteMs = remoteUpdated ? Date.parse(remoteUpdated) : NaN;
 
-        if (localUpdated && remoteUpdated && localUpdated >= remoteUpdated) {
-          continue; // Local is newer or equal, skip
+        if (!Number.isNaN(localMs) && !Number.isNaN(remoteMs) && localMs > remoteMs) {
+          continue; // Local is strictly newer, skip
         }
       }
 
