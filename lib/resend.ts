@@ -11,5 +11,4 @@ export function getResend(): Resend {
   return _client;
 }
 
-// Use onboarding@resend.dev for testing; replace with verified domain for production
-export const FROM_EMAIL = 'St. Mark Food Pantry <onboarding@resend.dev>';
+export const FROM_EMAIL = 'St. Mark Food Pantry <reports@stmarklegacy.org>';

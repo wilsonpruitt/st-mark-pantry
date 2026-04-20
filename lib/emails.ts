@@ -194,7 +194,7 @@ export function monthlyReportEmail(stats: MonthlyReportStats): { subject: string
           </td>
           <td style="width:4px;"></td>
           <td style="background-color:#fef3c7;border-radius:6px;padding:10px 12px;width:33%;">
-            <p style="margin:0;color:#92400e;font-size:12px;text-transform:uppercase;">Individuals</p>
+            <p style="margin:0;color:#92400e;font-size:12px;text-transform:uppercase;">Family Members</p>
             <p style="margin:4px 0 0;color:#78350f;font-size:18px;font-weight:700;">${totalIndividualsServed}</p>
           </td>
           <td style="width:4px;"></td>
@@ -211,7 +211,7 @@ export function monthlyReportEmail(stats: MonthlyReportStats): { subject: string
           <tr>
             <th style="padding:6px 8px;border-bottom:2px solid #d1d5db;text-align:left;color:#6b7280;font-size:12px;text-transform:uppercase;">Date</th>
             <th style="padding:6px 8px;border-bottom:2px solid #d1d5db;text-align:right;color:#6b7280;font-size:12px;text-transform:uppercase;">Visits</th>
-            <th style="padding:6px 8px;border-bottom:2px solid #d1d5db;text-align:right;color:#6b7280;font-size:12px;text-transform:uppercase;">People</th>
+            <th style="padding:6px 8px;border-bottom:2px solid #d1d5db;text-align:right;color:#6b7280;font-size:12px;text-transform:uppercase;">Family Members</th>
           </tr>
         </thead>
         <tbody>${byDayRows || '<tr><td colspan="3" style="padding:8px;color:#6b7280;font-size:13px;">No sessions this month.</td></tr>'}</tbody>
@@ -228,13 +228,7 @@ export function monthlyReportEmail(stats: MonthlyReportStats): { subject: string
         <tbody>${familyRows || '<tr><td colspan="2" style="padding:8px;color:#6b7280;font-size:13px;">—</td></tr>'}</tbody>
       </table>
 
-      <h3 style="margin:20px 0 8px;color:#1f2937;font-size:16px;">Perishables</h3>
-      <p style="margin:0;color:#374151;font-size:14px;">
-        Eligible: <strong>${perishablesEligible}</strong> &middot;
-        Restricted: <strong>${perishablesRestricted}</strong>
-      </p>
-
-      <p style="margin:24px 0 0;color:#6b7280;font-size:12px;">This report is generated automatically on the 1st of each month.</p>
+      <p style="margin:24px 0 0;color:#6b7280;font-size:12px;">This report is generated on the 3rd Monday of each month.</p>
     `),
   };
 }

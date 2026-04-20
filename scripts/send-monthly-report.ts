@@ -13,6 +13,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
 import { monthlyReportEmail, type MonthlyReportStats } from '../lib/emails.js';
+import { FROM_EMAIL } from '../lib/resend.js';
 
 function pad2(n: number): string {
   return String(n).padStart(2, '0');
@@ -69,13 +70,12 @@ async function main() {
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
   const resendKey = process.env.RESEND_API_KEY;
-  const fromEmail = process.env.FROM_EMAIL;
+  const fromEmail = FROM_EMAIL;
 
   const missing: string[] = [];
   if (!supabaseUrl) missing.push('SUPABASE_URL');
   if (!supabaseKey) missing.push('SUPABASE_SERVICE_KEY');
   if (!dryRun && !resendKey) missing.push('RESEND_API_KEY');
-  if (!dryRun && !fromEmail) missing.push('FROM_EMAIL');
   if (missing.length > 0) {
     console.error(`Missing env vars: ${missing.join(', ')}`);
     console.error('Add them to .env.local, then:');
@@ -95,6 +95,19 @@ async function main() {
   if (visitsErr) throw new Error(`visits query failed: ${visitsErr.message}`);
 
   const liveVisits = (visits ?? []).filter((v: { deleted_at?: string | null }) => !v.deleted_at);
+
+  // Also pull earliest-visit-ever for each household to compute first-time visits
+  const { data: allVisits, error: allVisitsErr } = await supabase
+    .from('pantry_visits')
+    .select('client_id, date, deleted_at')
+    .lt('date', endExclusive);
+  if (allVisitsErr) throw new Error(`earliest-visit query failed: ${allVisitsErr.message}`);
+  const earliestVisitByClient = new Map<string, string>();
+  for (const v of (allVisits ?? []) as Array<{ client_id: string; date: string; deleted_at: string | null }>) {
+    if (v.deleted_at) continue;
+    const prev = earliestVisitByClient.get(v.client_id);
+    if (!prev || v.date < prev) earliestVisitByClient.set(v.client_id, v.date);
+  }
 
   const { data: clients, error: clientsErr } = await supabase
     .from('pantry_clients')
@@ -158,9 +171,12 @@ async function main() {
     .filter((b) => bucketCounts.has(b))
     .map((l) => ({ label: l, count: bucketCounts.get(l) ?? 0 }));
 
+  // New clients = households whose first-ever visit falls in this month
   let newClients = 0;
-  for (const c of clientMap.values()) {
-    if (c.createdAt >= start && c.createdAt < endExclusive) newClients += 1;
+  for (const [clientId, firstDate] of earliestVisitByClient) {
+    if (firstDate >= start && firstDate < endExclusive && householdIds.has(clientId)) {
+      newClients += 1;
+    }
   }
 
   const stats: MonthlyReportStats = {
@@ -206,7 +222,7 @@ async function main() {
   let sent = 0;
   let failed = 0;
   for (const to of emails) {
-    const { error } = await resend.emails.send({ from: fromEmail!, to, subject, html });
+    const { error } = await resend.emails.send({ from: fromEmail, to, subject, html });
     if (error) {
       console.error(`send to ${to} failed:`, error);
       failed += 1;
