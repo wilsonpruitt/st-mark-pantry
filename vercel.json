@@ -17,10 +17,6 @@
     {
       "path": "/api/cron/reminders",
       "schedule": "0 14 * * *"
-    },
-    {
-      "path": "/api/cron/monthly-report",
-      "schedule": "0 14 1 * *"
     }
   ]
 }
