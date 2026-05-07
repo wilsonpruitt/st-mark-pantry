@@ -80,6 +80,11 @@
     .brand:hover { color: var(--ink); }
     .topbar nav a { font-size: 14px; color: var(--fen-mist); text-decoration: none; margin-left: 24px; }
     .topbar nav a:hover { color: var(--ink); }
+    @media (max-width: 720px) {
+      .topbar nav { display: none; }
+      .topbar { padding: 20px 0; }
+      .brand { font-size: 20px; }
+    }
 
     /* Hero */
     .hero {
