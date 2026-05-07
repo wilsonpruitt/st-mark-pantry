@@ -25,7 +25,7 @@
         '<li><a href="index.html"' + (page === 'home' ? ' class="active"' : '') + '>Home</a></li>' +
         '<li><a href="volunteer.html"' + (page === 'volunteer' ? ' class="active"' : '') + '>Volunteer</a></li>' +
         '<li><a href="contact.html"' + (page === 'contact' ? ' class="active"' : '') + '>Contact</a></li>' +
-        '<li><a href="/" style="background:rgba(255,255,255,0.15);border-radius:6px;">Open Dashboard</a></li>' +
+        '<li><a href="https://pantry.stmarklegacy.org/" style="background:rgba(255,255,255,0.15);border-radius:6px;">Open Dashboard</a></li>' +
       '</ul>' +
     '</div>';
 
