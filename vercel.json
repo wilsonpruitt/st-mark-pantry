@@ -11,10 +11,6 @@
   ],
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/$1" },
-    { "source": "/", "has": [{ "type": "host", "value": "stmarklegacy.org" }], "destination": "/site/index.html" },
-    { "source": "/", "has": [{ "type": "host", "value": "www.stmarklegacy.org" }], "destination": "/site/index.html" },
-    { "source": "/(.*)", "has": [{ "type": "host", "value": "stmarklegacy.org" }], "destination": "/site/$1" },
-    { "source": "/(.*)", "has": [{ "type": "host", "value": "www.stmarklegacy.org" }], "destination": "/site/$1" },
     { "source": "/((?!api|assets|icons|sw|workbox|manifest|registerSW|favicon|site).*)", "destination": "/index.html" }
   ],
   "crons": [
