@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cupboard — software for small feeding ministries</title>
+  <meta name="description" content="An offline-first tracker for food pantries, soup kitchens, backpack programs, and mobile distributions. Built by Wroot Labs.">
+  <link rel="icon" type="image/svg+xml" href="/cupboard/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --fen: #2C3E4A;
+      --fen-mist: #5B6B76;
+      --ink: #1A2128;
+      --reed: #C9A86A;
+      --reed-deep: #A88848;
+      --parchment: #F7F3EC;
+      --ivory: #FBF8F1;
+      --slate-100: #E7E2D7;
+      --slate-200: #D6D0C2;
+      --slate-300: #B6B0A2;
+      --slate-600: #54595E;
+      --measure: 64ch;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      background: var(--parchment);
+      color: var(--ink);
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      font-size: 16px;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { color: var(--fen); text-decoration: underline; text-decoration-color: var(--slate-200); text-underline-offset: 3px; }
+    a:hover { color: var(--ink); text-decoration-color: var(--reed-deep); }
+
+    .eyebrow {
+      font-family: Inter, sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: var(--fen-mist);
+    }
+
+    h1, h2, h3 { font-family: "EB Garamond", Garamond, "Adobe Garamond Pro", Georgia, serif; font-weight: 500; color: var(--ink); margin: 0; letter-spacing: -0.005em; }
+    h1 { font-size: clamp(40px, 6vw, 64px); line-height: 1.05; }
+    h2 { font-size: clamp(28px, 3.4vw, 38px); line-height: 1.15; }
+    h3 { font-size: 20px; line-height: 1.25; font-weight: 600; }
+    p { margin: 0; }
+
+    .sub {
+      font-family: "EB Garamond", Georgia, serif;
+      font-style: italic;
+      font-size: clamp(20px, 2.4vw, 26px);
+      color: var(--fen-mist);
+      line-height: 1.35;
+    }
+
+    .container {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 0 32px;
+    }
+    .narrow { max-width: 720px; }
+
+    /* Top bar */
+    .topbar {
+      padding: 28px 0;
+      border-bottom: 1px solid var(--slate-100);
+    }
+    .topbar .row { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+    .brand { display: flex; align-items: baseline; gap: 10px; font-family: "EB Garamond", Georgia, serif; font-size: 22px; color: var(--ink); text-decoration: none; }
+    .brand .by { font-size: 12px; color: var(--fen-mist); font-family: Inter, sans-serif; letter-spacing: 0.4px; }
+    .brand:hover { color: var(--ink); }
+    .topbar nav a { font-size: 14px; color: var(--fen-mist); text-decoration: none; margin-left: 24px; }
+    .topbar nav a:hover { color: var(--ink); }
+
+    /* Hero */
+    .hero {
+      padding: 96px 0 80px;
+    }
+    .hero h1 { margin-top: 16px; }
+    .hero .sub { margin-top: 16px; }
+    .hero .lede {
+      margin-top: 28px;
+      max-width: 56ch;
+      color: var(--slate-600);
+      font-size: 17px;
+      line-height: 1.6;
+    }
+    .cta-row {
+      margin-top: 36px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 22px;
+      border-radius: 6px;
+      font-family: Inter, sans-serif;
+      font-weight: 500;
+      font-size: 15px;
+      line-height: 1;
+      border: 1px solid transparent;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background-color 120ms cubic-bezier(0.32, 0.72, 0.32, 1), color 120ms;
+    }
+    .btn-primary {
+      background: var(--fen);
+      color: var(--ivory);
+      border-color: var(--fen);
+    }
+    .btn-primary:hover { background: var(--fen-mist); color: var(--ivory); text-decoration: none; }
+    .btn-ghost {
+      background: transparent;
+      color: var(--fen);
+      border-color: var(--slate-200);
+    }
+    .btn-ghost:hover { background: var(--ivory); color: var(--ink); text-decoration: none; }
+
+    /* Sections */
+    section { padding: 64px 0; }
+    .section-head { margin-bottom: 40px; }
+    .section-head h2 { margin-top: 6px; }
+
+    /* Three-column features */
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+    @media (max-width: 760px) { .grid-3 { grid-template-columns: 1fr; } }
+    .card {
+      background: var(--ivory);
+      border: 1px solid var(--slate-100);
+      border-radius: 10px;
+      padding: 28px 24px;
+    }
+    .card h3 { margin-bottom: 8px; }
+    .card p { color: var(--slate-600); font-size: 15px; }
+
+    /* Editorial card with reed */
+    .reed-card {
+      background: var(--ivory);
+      border: 1px solid var(--slate-100);
+      border-left: 3px solid var(--reed);
+      border-radius: 10px;
+      padding: 32px 32px 32px 28px;
+      max-width: var(--measure);
+    }
+
+    /* Audience list */
+    .audience { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 32px; max-width: 720px; }
+    @media (max-width: 600px) { .audience { grid-template-columns: 1fr; } }
+    .audience li { color: var(--slate-600); font-size: 15px; padding: 6px 0; border-bottom: 1px solid var(--slate-100); list-style: none; }
+    .audience ul { padding: 0; margin: 0; }
+
+    /* Pricing */
+    .price-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      margin-top: 8px;
+    }
+    @media (max-width: 760px) { .price-grid { grid-template-columns: 1fr; } }
+    .price-card {
+      background: var(--ivory);
+      border: 1px solid var(--slate-100);
+      border-radius: 10px;
+      padding: 28px 24px;
+    }
+    .price-card .name { font-family: "EB Garamond", Georgia, serif; font-size: 24px; color: var(--ink); }
+    .price-card .price { font-family: Inter, sans-serif; font-size: 28px; font-weight: 500; color: var(--ink); margin-top: 4px; }
+    .price-card .price small { font-family: Inter, sans-serif; font-size: 14px; font-weight: 400; color: var(--slate-600); }
+    .price-card ul { list-style: none; padding: 0; margin: 16px 0 0; color: var(--slate-600); font-size: 14px; }
+    .price-card li { padding: 6px 0; border-bottom: 1px solid var(--slate-100); }
+    .price-card li:last-child { border-bottom: 0; }
+
+    /* Form */
+    .form-card {
+      background: var(--ivory);
+      border: 1px solid var(--slate-100);
+      border-radius: 14px;
+      padding: 40px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .form-row { display: grid; gap: 16px; margin-top: 20px; }
+    label { display: block; font-size: 13px; font-weight: 500; color: var(--ink); margin-bottom: 6px; }
+    input, textarea, select {
+      width: 100%;
+      padding: 10px 12px;
+      font-family: Inter, sans-serif;
+      font-size: 15px;
+      color: var(--ink);
+      background: var(--parchment);
+      border: 1px solid var(--slate-200);
+      border-radius: 6px;
+      outline: none;
+      transition: border-color 120ms;
+    }
+    input:focus, textarea:focus, select:focus { border-color: var(--fen-mist); box-shadow: 0 0 0 2px rgba(44,62,74,0.18); }
+    textarea { resize: vertical; min-height: 80px; }
+    .form-status { margin-top: 14px; font-size: 14px; min-height: 1.2em; color: var(--slate-600); }
+    .form-status.ok { color: #4F6E45; }
+    .form-status.err { color: #8C3A2E; }
+
+    /* Footer */
+    footer {
+      padding: 48px 0 64px;
+      border-top: 1px solid var(--slate-100);
+      color: var(--fen-mist);
+      font-size: 13px;
+    }
+    footer .row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; }
+    footer a { color: var(--fen-mist); text-decoration: none; }
+    footer a:hover { color: var(--ink); text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="container row">
+      <a href="/" class="brand">
+        Cupboard
+        <span class="by">by Wroot Labs</span>
+      </a>
+      <nav>
+        <a href="#what">What it is</a>
+        <a href="#who">Who it's for</a>
+        <a href="#pricing">Pricing</a>
+        <a href="#interest">Get notified</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="container">
+        <span class="eyebrow">In development · Beta opens late 2026</span>
+        <h1>A quiet tracker for the work of feeding people.</h1>
+        <p class="sub">Pantries, soup kitchens, backpack programs — kept on a single Chromebook.</p>
+        <p class="lede">
+          Cupboard is software for small feeding ministries who want a record of what they do without
+          buying a Salesforce contract or learning a database. It works offline, syncs when it can,
+          handles TEFAP if you need it, and disappears when you don&rsquo;t.
+        </p>
+        <div class="cta-row">
+          <a href="#interest" class="btn btn-primary">Join the waitlist</a>
+          <a href="#what" class="btn btn-ghost">See how it works</a>
+        </div>
+      </div>
+    </section>
+
+    <section id="what">
+      <div class="container">
+        <div class="section-head narrow">
+          <span class="eyebrow">What it is</span>
+          <h2>The same notebook your pantry already uses, but kept by the computer.</h2>
+        </div>
+        <div class="grid-3">
+          <article class="card">
+            <h3>Offline first</h3>
+            <p>Runs on a Chromebook with the wifi out. Data lives on the device and syncs back to the cloud when the connection returns.</p>
+          </article>
+          <article class="card">
+            <h3>Built for shared devices</h3>
+            <p>One device, many volunteers. Sign in once at setup; a simple between-shifts password locks the screen.</p>
+          </article>
+          <article class="card">
+            <h3>TEFAP-ready</h3>
+            <p>Optional compliance mode adds signature capture, FPL eligibility, annual recertification, and the monthly USDA report.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="who" style="background: var(--ivory); border-top: 1px solid var(--slate-100); border-bottom: 1px solid var(--slate-100);">
+      <div class="container">
+        <div class="section-head narrow">
+          <span class="eyebrow">Who it&rsquo;s for</span>
+          <h2>Small feeding ministries that want a record, not a CRM.</h2>
+        </div>
+        <div class="audience">
+          <ul>
+            <li>Food pantries operating one to three days a week</li>
+            <li>Soup kitchens and prepared-meal programs</li>
+            <li>Backpack programs distributing to schools</li>
+            <li>Mobile pantries and rural distributions</li>
+          </ul>
+          <ul>
+            <li>Operations between 50 and 5,000 households</li>
+            <li>Programs that share devices across volunteers</li>
+            <li>Ministries reporting to TEFAP or a regional food bank</li>
+            <li>Small standalone pantries with no compliance load</li>
+          </ul>
+        </div>
+        <div style="margin-top: 32px;">
+          <div class="reed-card">
+            <p style="font-family: 'EB Garamond', Georgia, serif; font-style: italic; font-size: 19px; color: var(--ink); line-height: 1.5; margin: 0;">
+              Cupboard began as the system for one pantry in Austin, Texas, kept on a single Chromebook, with no IT staff and no budget. It is a record of what a small ministry actually needs &mdash; not what enterprise software thinks it should.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="pricing">
+      <div class="container">
+        <div class="section-head narrow">
+          <span class="eyebrow">Pricing</span>
+          <h2>Free to start. Paid only when you need more than a notebook.</h2>
+          <p style="margin-top: 12px; color: var(--slate-600);">Indicative pricing for the beta. Subject to change at launch.</p>
+        </div>
+        <div class="price-grid">
+          <article class="price-card">
+            <div class="name">Basics</div>
+            <div class="price">Free</div>
+            <ul>
+              <li>Client and visit tracking</li>
+              <li>Volunteer roster</li>
+              <li>Offline-first PWA</li>
+              <li>One device</li>
+            </ul>
+          </article>
+          <article class="price-card">
+            <div class="name">Pro &amp; TEFAP</div>
+            <div class="price">$149 <small>one-time</small></div>
+            <ul>
+              <li>Everything in Basics</li>
+              <li>Signature capture</li>
+              <li>FPL eligibility checks</li>
+              <li>Annual recertification</li>
+              <li>Monthly USDA report</li>
+            </ul>
+          </article>
+          <article class="price-card">
+            <div class="name">Cloud sync</div>
+            <div class="price">$10 <small>/ month</small></div>
+            <ul>
+              <li>Multi-device for staff</li>
+              <li>Off-device backup</li>
+              <li>Stakeholder reports by email</li>
+              <li>Cancel anytime</li>
+            </ul>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="interest">
+      <div class="container">
+        <div class="form-card">
+          <span class="eyebrow">Beta interest</span>
+          <h2 style="margin-top: 6px;">Tell us about your ministry.</h2>
+          <p class="sub" style="font-size: 18px; margin-top: 8px;">We&rsquo;ll be in touch as the beta opens.</p>
+          <form id="interest-form" class="form-row" novalidate>
+            <div>
+              <label for="name">Your name</label>
+              <input type="text" id="name" name="name" autocomplete="name" required>
+            </div>
+            <div>
+              <label for="email">Email</label>
+              <input type="email" id="email" name="email" autocomplete="email" required>
+            </div>
+            <div>
+              <label for="organization">Ministry or organization</label>
+              <input type="text" id="organization" name="organization" autocomplete="organization">
+            </div>
+            <div>
+              <label for="program">What do you operate?</label>
+              <select id="program" name="program">
+                <option value="">Choose one</option>
+                <option>Food pantry</option>
+                <option>Soup kitchen / prepared meals</option>
+                <option>Backpack program</option>
+                <option>Mobile distribution</option>
+                <option>Multiple of the above</option>
+                <option>Something else</option>
+              </select>
+            </div>
+            <div>
+              <label for="notes">Anything else we should know?</label>
+              <textarea id="notes" name="notes" rows="3" placeholder="TEFAP compliance, household count, current tools, etc."></textarea>
+            </div>
+            <div>
+              <button type="submit" class="btn btn-primary" id="submit-btn">Add me to the waitlist</button>
+            </div>
+            <div class="form-status" id="form-status" aria-live="polite"></div>
+          </form>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container row">
+      <div>&copy; 2026 Wroot Labs LLC &middot; <a href="https://wrootlabs.com">wrootlabs.com</a></div>
+      <div>
+        <a href="mailto:wilson@wrootlabs.com">wilson@wrootlabs.com</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const form = document.getElementById('interest-form');
+    const status = document.getElementById('form-status');
+    const btn = document.getElementById('submit-btn');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      status.textContent = '';
+      status.className = 'form-status';
+
+      const data = Object.fromEntries(new FormData(form).entries());
+      if (!data.name || !data.email) {
+        status.textContent = 'Name and email are required.';
+        status.classList.add('err');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Sending…';
+
+      try {
+        const res = await fetch('/api/cupboard-interest', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        });
+        if (!res.ok) throw new Error('Server returned ' + res.status);
+        form.reset();
+        status.textContent = 'Thank you. You’re on the list.';
+        status.classList.add('ok');
+      } catch (err) {
+        status.textContent = 'Something went wrong. Email wilson@wrootlabs.com directly.';
+        status.classList.add('err');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Add me to the waitlist';
+      }
+    });
+  </script>
+</body>
+</html>
