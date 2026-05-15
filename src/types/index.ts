@@ -12,6 +12,34 @@ export interface FamilyMember {
   dobEstimated?: boolean; // true when synthesized from an entered age
 }
 
+export type SignatureMethod =
+  | 'touch'
+  | 'mouse'
+  | 'pen'
+  | 'paper-scan'
+  | 'verbal-attestation';
+
+export type EligibilityBasis =
+  | { type: 'categorical'; programs: string[] }
+  | { type: 'income-attestation' };
+
+export interface TEFAPCertification {
+  lastCertifiedAt: string;
+  certifiedFor: string; // e.g. 'FY2026'
+  eligibilityBasis: EligibilityBasis;
+  residencyConfirmed: boolean;
+  signaturePng: string; // data URL
+  signedByName: string;
+  signedByStaff?: string; // staff PIN holder if assisted
+  signedAt: string;
+  signatureMethod: SignatureMethod;
+  raceEthnicity?: {
+    declined?: boolean;
+    race?: string[];
+    ethnicity?: 'hispanic' | 'not-hispanic' | 'declined';
+  };
+}
+
 export interface Client {
   id: string;
   firstName: string;
@@ -24,6 +52,7 @@ export interface Client {
   numberInFamily: number;
   notes?: string;
   acceptsPerishables?: boolean; // undefined/true = eligible, false = no perishables
+  tefap?: TEFAPCertification;
   createdAt: string;
   updatedAt: string;
 }

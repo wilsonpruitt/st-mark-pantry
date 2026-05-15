@@ -10,7 +10,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ArrowLeft, X, Save, ClipboardCheck, AlertTriangle } from 'lucide-react';
 import { FamilyMemberList } from './FamilyMemberList';
-import type { Client, FamilyMember, Address, PantryDay } from '@/types';
+import { TefapCertificationForm } from './TefapCertificationForm';
+import { emptyTefapDraft, type TefapDraft } from '@/lib/tefap-draft';
+import { useSettings } from '@/contexts/SettingsContext';
+import type { Client, FamilyMember, Address, PantryDay, TEFAPCertification } from '@/types';
 
 const EMPTY_ADDRESS: Address = {
   street: '',
@@ -23,6 +26,8 @@ export function ClientForm() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const isEdit = Boolean(id);
+  const { settings } = useSettings();
+  const tefapMode = settings.complianceMode === 'tefap';
 
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
@@ -36,6 +41,9 @@ export function ClientForm() {
   const [notes, setNotes] = useState('');
   const [acceptsPerishables, setAcceptsPerishables] = useState(true);
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
+  const [dateOfBirth, setDateOfBirth] = useState('');
+  const [tefapDraft, setTefapDraft] = useState<TefapDraft>(emptyTefapDraft);
+  const [tefapError, setTefapError] = useState<string | null>(null);
 
   // Family size override
   const [overrideFamilySize, setOverrideFamilySize] = useState(false);
@@ -72,6 +80,24 @@ export function ClientForm() {
       setNotes(client.notes ?? '');
       setAcceptsPerishables(client.acceptsPerishables !== false);
       setFamilyMembers(client.familyMembers ?? []);
+      setDateOfBirth(client.dateOfBirth ?? '');
+      if (client.tefap) {
+        const t = client.tefap;
+        setTefapDraft({
+          eligibilityType: t.eligibilityBasis.type,
+          categoricalPrograms:
+            t.eligibilityBasis.type === 'categorical'
+              ? t.eligibilityBasis.programs
+              : [],
+          residencyConfirmed: t.residencyConfirmed,
+          signedByName: t.signedByName,
+          signaturePng: t.signaturePng,
+          signatureMethod: t.signatureMethod,
+          raceDeclined: t.raceEthnicity?.declined ?? false,
+          race: t.raceEthnicity?.race ?? [],
+          ethnicity: t.raceEthnicity?.ethnicity ?? null,
+        });
+      }
 
       // Check if family size was manually overridden
       const autoSize = 1 + (client.familyMembers ?? []).length;
@@ -111,13 +137,57 @@ export function ClientForm() {
     setDuplicate(match ?? null);
   }
 
+  function buildTefapCert(now: string): TEFAPCertification | null {
+    const d = tefapDraft;
+    if (!dateOfBirth.trim()) return null;
+    if (d.eligibilityType === null) return null;
+    if (d.eligibilityType === 'categorical' && d.categoricalPrograms.length === 0)
+      return null;
+    if (!d.residencyConfirmed) return null;
+    if (!d.signedByName.trim()) return null;
+    if (!d.signaturePng || !d.signatureMethod) return null;
+    return {
+      lastCertifiedAt: now,
+      certifiedFor: settings.fplYear,
+      eligibilityBasis:
+        d.eligibilityType === 'categorical'
+          ? { type: 'categorical', programs: d.categoricalPrograms }
+          : { type: 'income-attestation' },
+      residencyConfirmed: d.residencyConfirmed,
+      signaturePng: d.signaturePng,
+      signedByName: d.signedByName.trim(),
+      signedAt: now,
+      signatureMethod: d.signatureMethod,
+      raceEthnicity: d.raceDeclined
+        ? { declined: true }
+        : {
+            race: d.race,
+            ethnicity: d.ethnicity ?? undefined,
+          },
+    };
+  }
+
   async function saveClient(goToCheckIn: boolean) {
     if (!firstName.trim() || !lastName.trim()) return;
+
+    setTefapError(null);
+    const now = new Date().toISOString();
+
+    let tefapCert: TEFAPCertification | undefined;
+    if (tefapMode) {
+      const built = buildTefapCert(now);
+      if (!built) {
+        setTefapError(
+          'TEFAP mode requires head-of-household date of birth, an eligibility basis, residency confirmation, a typed name, and a signature.',
+        );
+        return;
+      }
+      tefapCert = built;
+    }
 
     setSaving(true);
 
     try {
-      const now = new Date().toISOString();
       const clientData = {
         firstName: firstName.trim(),
         lastName: lastName.trim(),
@@ -129,10 +199,12 @@ export function ClientForm() {
           state: address.state.trim() || 'TX',
           zip: address.zip.trim(),
         },
+        dateOfBirth: dateOfBirth.trim() || undefined,
         familyMembers: familyMembers.filter((m) => m.name.trim() !== ''),
         numberInFamily: effectiveFamilySize,
         notes: notes.trim() || undefined,
         acceptsPerishables: acceptsPerishables ? undefined : false,
+        tefap: tefapCert,
       };
 
       if (isEdit && id) {
@@ -283,6 +355,22 @@ export function ClientForm() {
               </div>
             </div>
 
+            {tefapMode && (
+              <div className="space-y-2">
+                <Label htmlFor="dob">Head of household — Date of Birth *</Label>
+                <Input
+                  id="dob"
+                  type="date"
+                  value={dateOfBirth}
+                  onChange={(e) => setDateOfBirth(e.target.value)}
+                  className="w-48"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Required for TEFAP certification.
+                </p>
+              </div>
+            )}
+
             <label className="flex items-center gap-2 text-sm cursor-pointer">
               <input
                 type="checkbox"
@@ -401,6 +489,25 @@ export function ClientForm() {
             </div>
           </CardContent>
         </Card>
+
+        {/* TEFAP certification (tefap compliance mode only) */}
+        {tefapMode && (
+          <TefapCertificationForm
+            state={settings.state}
+            fplYear={settings.fplYear}
+            value={tefapDraft}
+            onChange={setTefapDraft}
+          />
+        )}
+
+        {tefapError && (
+          <Alert className="border-destructive bg-destructive/10">
+            <AlertTriangle className="size-4 text-destructive" />
+            <AlertDescription className="text-destructive">
+              {tefapError}
+            </AlertDescription>
+          </Alert>
+        )}
 
         {/* Submit */}
         <div className="flex justify-end gap-3">
