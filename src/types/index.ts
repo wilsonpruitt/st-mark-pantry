@@ -8,7 +8,8 @@ export interface Address {
 export interface FamilyMember {
   name: string;
   relationship?: string;
-  age?: number;
+  dateOfBirth?: string;   // ISO date (YYYY-MM-DD)
+  dobEstimated?: boolean; // true when synthesized from an entered age
 }
 
 export interface Client {
@@ -18,6 +19,7 @@ export interface Client {
   phone?: string;
   email?: string;
   address: Address;
+  dateOfBirth?: string; // ISO date (YYYY-MM-DD); head-of-household, TEFAP
   familyMembers: FamilyMember[];
   numberInFamily: number;
   notes?: string;

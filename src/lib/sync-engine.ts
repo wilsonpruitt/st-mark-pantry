@@ -265,6 +265,16 @@ class SyncEngine {
         }
       }
 
+      // Convert legacy {age} family members from stale cloud rows to the
+      // DOB-based shape (mirrors the v7 Dexie migration; deterministic).
+      if (_tableName === 'clients' && Array.isArray(cleanRecord.familyMembers)) {
+        const { normalizeFamilyMember, recordYear } = await import('@/lib/family');
+        const asOfYear = recordYear(cleanRecord as { createdAt?: string; updatedAt?: string });
+        cleanRecord.familyMembers = (cleanRecord.familyMembers as Record<string, unknown>[]).map(
+          (m) => normalizeFamilyMember(m, asOfYear),
+        );
+      }
+
       // Last-write-wins: only apply if remote is strictly newer.
       // Parse as Date to avoid string-compare surprises when clocks differ
       // in offset formatting (e.g. "+00:00" vs "Z"). On tie, server wins.

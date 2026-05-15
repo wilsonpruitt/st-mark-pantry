@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, X } from 'lucide-react';
 import type { FamilyMember } from '@/types';
+import { ageToDob, approxAgeFromDob } from '@/lib/family';
 
 interface FamilyMemberListProps {
   members: FamilyMember[];
@@ -19,7 +20,24 @@ const RELATIONSHIP_OPTIONS = [
 
 export function FamilyMemberList({ members, onChange }: FamilyMemberListProps) {
   function addMember() {
-    onChange([...members, { name: '', relationship: '', age: undefined }]);
+    onChange([...members, { name: '', relationship: '', dateOfBirth: undefined }]);
+  }
+
+  function setAge(index: number, ageStr: string) {
+    const updated = members.map((member, i) => {
+      if (i !== index) return member;
+      if (ageStr === '') {
+        return { name: member.name, relationship: member.relationship };
+      }
+      const age = parseInt(ageStr, 10);
+      if (Number.isNaN(age) || age < 0) return member;
+      return {
+        ...member,
+        dateOfBirth: ageToDob(age, new Date().getFullYear()),
+        dobEstimated: true,
+      };
+    });
+    onChange(updated);
   }
 
   function removeMember(index: number) {
@@ -65,11 +83,8 @@ export function FamilyMemberList({ members, onChange }: FamilyMemberListProps) {
               placeholder="Age"
               min={0}
               max={150}
-              value={member.age ?? ''}
-              onChange={(e) => {
-                const val = e.target.value;
-                updateMember(index, 'age', val === '' ? undefined : parseInt(val, 10));
-              }}
+              value={member.dateOfBirth ? approxAgeFromDob(member.dateOfBirth) : ''}
+              onChange={(e) => setAge(index, e.target.value)}
             />
           </div>
           <Button

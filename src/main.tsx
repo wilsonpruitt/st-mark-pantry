@@ -5,8 +5,13 @@ import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/react'
 import { Toaster } from 'sonner'
 import { SettingsProvider } from './contexts/SettingsContext'
+import { ensureSeedData } from './lib/seed-data'
 import { App } from './App'
 import './index.css'
+
+void ensureSeedData().catch((err) => {
+  console.error('Failed to seed compliance data:', err)
+})
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

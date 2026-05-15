@@ -12,6 +12,7 @@ import { StatCard } from '@/components/dashboard/StatCard';
 import { useSettings } from '@/contexts/SettingsContext';
 import { getTodayISO, getMonthRange, formatDate } from '@/utils/dateHelpers';
 import { PrintVisitLog } from './PrintVisitLog';
+import { generateMonthlyReport } from '@/lib/monthly-report';
 import type { Client, Volunteer } from '@/types';
 
 // ---------------------------------------------------------------------------
@@ -86,6 +87,18 @@ export function ReportsPage() {
       totalHours: Math.round(totalHours * 10) / 10,
     };
   }, [visits, volunteerShifts, monthStart, monthEnd]);
+
+  // --- Age breakdown for the current month (as-of-visit-date bucketing) ---
+  const ageReport = useMemo(() => {
+    if (!visits || !clients) return null;
+    const now = new Date();
+    return generateMonthlyReport(
+      visits,
+      clients,
+      now.getFullYear(),
+      now.getMonth() + 1,
+    );
+  }, [visits, clients]);
 
   // --- Monthly chart data (last 12 months) ---
   const monthlyData = useMemo(() => {
@@ -288,6 +301,39 @@ export function ReportsPage() {
           />
         </div>
       </section>
+
+      {/* ---- Age Breakdown ---- */}
+      {settings.intakeModes.includes('household') && ageReport && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Age Breakdown</CardTitle>
+            <CardDescription>
+              {ageReport.monthLabel} — individuals served, counted by age on
+              each visit date
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="grid grid-cols-3 gap-3">
+              <StatCard icon={Users} label="Under 18" value={ageReport.ageBuckets['<18']} />
+              <StatCard icon={Users} label="18–59" value={ageReport.ageBuckets['18-59']} />
+              <StatCard icon={Users} label="60+" value={ageReport.ageBuckets['60+']} />
+            </div>
+            {(ageReport.ageBuckets.unknownAge > 0 ||
+              ageReport.householdsWithEstimatedDob > 0) && (
+              <p className="text-xs text-muted-foreground">
+                {ageReport.ageBuckets.unknownAge > 0 &&
+                  `${ageReport.ageBuckets.unknownAge} person-visit${
+                    ageReport.ageBuckets.unknownAge === 1 ? '' : 's'
+                  } with no date of birth on file. `}
+                {ageReport.householdsWithEstimatedDob > 0 &&
+                  `${ageReport.householdsWithEstimatedDob} household${
+                    ageReport.householdsWithEstimatedDob === 1 ? '' : 's'
+                  } with an estimated DOB.`}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* ---- Inactive Clients Link ---- */}
       <Link

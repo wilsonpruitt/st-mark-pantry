@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { Download, Upload, FileSpreadsheet, Info, Package, Bell, Cloud, RefreshCw } from 'lucide-react'
+import { Download, Upload, FileSpreadsheet, Info, Package, Bell, Cloud, RefreshCw, Store } from 'lucide-react'
 import { db } from '@/db/database'
 import { exportMultiSheetExcel } from '@/lib/excel'
 import { useSettings } from '@/contexts/SettingsContext'
@@ -10,6 +10,8 @@ import { GoogleSheetsExport } from './GoogleSheetsExport'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
+import { Input } from '@/components/ui/input'
+import type { IntakeMode, Distribution } from '@/lib/settings'
 import {
   Card,
   CardContent,
@@ -29,6 +31,20 @@ export function SettingsPage() {
   const showMessage = (type: 'success' | 'error', text: string) => {
     setMessage({ type, text })
     setTimeout(() => setMessage(null), 4000)
+  }
+
+  const setIntakeMode = (mode: IntakeMode, on: boolean) => {
+    const next = on
+      ? Array.from(new Set([...settings.intakeModes, mode]))
+      : settings.intakeModes.filter((m) => m !== mode)
+    updateSettings({ intakeModes: next.length ? next : ['household'] })
+  }
+
+  const setDistribution = (dist: Distribution, on: boolean) => {
+    const next = on
+      ? Array.from(new Set([...settings.distributions, dist]))
+      : settings.distributions.filter((d) => d !== dist)
+    updateSettings({ distributions: next.length ? next : ['groceries'] })
   }
 
   const exportJSON = async () => {
@@ -182,6 +198,107 @@ export function SettingsPage() {
           {message.text}
         </div>
       )}
+
+      {/* Pantry Profile */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Store className="size-4" />
+            Pantry Profile
+          </CardTitle>
+          <CardDescription>
+            Identity and operating mode. These drive report headers and
+            compliance behavior.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          <div className="space-y-1.5">
+            <Label htmlFor="pantry-name" className="text-sm font-medium">
+              Pantry name
+            </Label>
+            <Input
+              id="pantry-name"
+              value={settings.pantryName}
+              onChange={(e) => updateSettings({ pantryName: e.target.value })}
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="pantry-state" className="text-sm font-medium">
+              State
+            </Label>
+            <Input
+              id="pantry-state"
+              maxLength={2}
+              className="w-20 uppercase"
+              value={settings.state}
+              onChange={(e) =>
+                updateSettings({ state: e.target.value.toUpperCase().slice(0, 2) })
+              }
+            />
+            <p className="text-xs text-muted-foreground">
+              Two-letter code. Selects the state TEFAP configuration.
+            </p>
+          </div>
+
+          <div className="flex items-center justify-between gap-4">
+            <div className="space-y-0.5">
+              <Label htmlFor="tefap-toggle" className="text-sm font-medium">
+                TEFAP compliance mode
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Adds eligibility, signature capture, and audit reporting
+              </p>
+            </div>
+            <Switch
+              id="tefap-toggle"
+              checked={settings.complianceMode === 'tefap'}
+              onCheckedChange={(checked) =>
+                updateSettings({
+                  complianceMode: checked === true ? 'tefap' : 'standalone',
+                })
+              }
+            />
+          </div>
+
+          <div className="flex items-center justify-between gap-4">
+            <div className="space-y-0.5">
+              <Label htmlFor="anon-toggle" className="text-sm font-medium">
+                Anonymous-count intake
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                For soup kitchens / meal programs that log served counts, not
+                households
+              </p>
+            </div>
+            <Switch
+              id="anon-toggle"
+              checked={settings.intakeModes.includes('anonymous-count')}
+              onCheckedChange={(checked) =>
+                setIntakeMode('anonymous-count', checked === true)
+              }
+            />
+          </div>
+
+          <div className="flex items-center justify-between gap-4">
+            <div className="space-y-0.5">
+              <Label htmlFor="meals-toggle" className="text-sm font-medium">
+                Prepared meals
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Track prepared-meal distribution alongside groceries
+              </p>
+            </div>
+            <Switch
+              id="meals-toggle"
+              checked={settings.distributions.includes('prepared-meals')}
+              onCheckedChange={(checked) =>
+                setDistribution('prepared-meals', checked === true)
+              }
+            />
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Features */}
       <Card>
@@ -346,7 +463,7 @@ export function SettingsPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-1 text-sm text-muted-foreground">
-          <p className="font-medium text-foreground">St. Mark Legacy Food Pantry</p>
+          <p className="font-medium text-foreground">{settings.pantryName}</p>
           <p>Version v1.0.0</p>
           <p>Data is stored locally and synced to the cloud.</p>
         </CardContent>

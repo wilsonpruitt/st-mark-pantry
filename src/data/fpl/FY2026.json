@@ -1,0 +1,17 @@
+{
+  "year": "FY2026",
+  "region": "contiguous",
+  "effectiveFrom": "2026-01-13",
+  "source": "HHS ASPE / Federal Register 2026-00755, published 2026-01-15",
+  "thresholds": {
+    "1": 15960,
+    "2": 21640,
+    "3": 27320,
+    "4": 33000,
+    "5": 38680,
+    "6": 44360,
+    "7": 50040,
+    "8": 55720
+  },
+  "perAdditionalPerson": 5680
+}

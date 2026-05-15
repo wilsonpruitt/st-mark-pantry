@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db/database';
+import { approxAgeFromDob } from '@/lib/family';
 import { ArrowLeft, Phone, Mail, MapPin, Pencil, Trash2, Users, AlertTriangle, Snowflake } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -233,9 +234,10 @@ export function ClientDetail() {
                       </Badge>
                     )}
                   </div>
-                  {member.age !== undefined && (
+                  {member.dateOfBirth && (
                     <span className="text-sm text-muted-foreground shrink-0 ml-2">
-                      Age {member.age}
+                      Age {approxAgeFromDob(member.dateOfBirth)}
+                      {member.dobEstimated && ' (est.)'}
                     </span>
                   )}
                 </div>

@@ -1,0 +1,16 @@
+{
+  "state": "TX",
+  "name": "Texas",
+  "fplMultiplier": 1.85,
+  "fplYear": "FY2026",
+  "tefapAdministrator": "Texas Department of Agriculture (TDA)",
+  "categoricalPrograms": [
+    "SNAP",
+    "TANF",
+    "Medicaid",
+    "SSI"
+  ],
+  "categoricalProgramsVerified": false,
+  "stateAgencyUrl": "https://www.texasagriculture.gov/",
+  "notes": "fplMultiplier 1.85 = standard TEFAP income standard (185% of poverty). categoricalPrograms list is provisional — verify against current TDA TEFAP eligibility guidance before TEFAP launch (spec open question #2)."
+}
