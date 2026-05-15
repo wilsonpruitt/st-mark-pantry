@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lead Volunteer Guide — St. Mark Legacy Food Pantry</title>
+  <style>
+    @page {
+      size: letter;
+      margin: 0.75in;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+      color: #2C2C2C;
+      line-height: 1.6;
+      max-width: 7.5in;
+      margin: 0 auto;
+      padding: 0.5in;
+      font-size: 11pt;
+    }
+
+    /* Header */
+    .header {
+      background: #2D5A47;
+      color: white;
+      padding: 24px 32px;
+      border-radius: 8px;
+      margin-bottom: 24px;
+      text-align: center;
+    }
+    .header h1 { font-size: 20pt; margin-bottom: 4px; }
+    .header p { opacity: 0.85; font-size: 11pt; }
+
+    /* Sections */
+    h2 {
+      color: #2D5A47;
+      font-size: 14pt;
+      margin: 20px 0 8px;
+      padding-bottom: 4px;
+      border-bottom: 2px solid #D4A853;
+    }
+    h3 {
+      color: #2D5A47;
+      font-size: 12pt;
+      margin: 14px 0 6px;
+    }
+
+    p, li { margin-bottom: 4px; }
+    ul, ol { padding-left: 20px; margin-bottom: 10px; }
+
+    /* Step boxes */
+    .step-box {
+      background: #f0fdf4;
+      border-left: 4px solid #2D5A47;
+      padding: 10px 14px;
+      margin: 8px 0;
+      border-radius: 0 6px 6px 0;
+    }
+    .step-box .step-num {
+      font-weight: 700;
+      color: #2D5A47;
+    }
+
+    /* Tip boxes */
+    .tip {
+      background: #FDF8F3;
+      border-left: 4px solid #D4A853;
+      padding: 10px 14px;
+      margin: 10px 0;
+      border-radius: 0 6px 6px 0;
+      font-size: 10pt;
+    }
+    .tip strong { color: #92400e; }
+
+    /* Nav reference */
+    .nav-ref {
+      display: inline-block;
+      background: #e5e7eb;
+      padding: 1px 8px;
+      border-radius: 4px;
+      font-size: 10pt;
+      font-weight: 600;
+    }
+
+    /* Table */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 8px 0 12px;
+      font-size: 10pt;
+    }
+    th, td {
+      border: 1px solid #d1d5db;
+      padding: 6px 10px;
+      text-align: left;
+    }
+    th { background: #2D5A47; color: white; }
+    tr:nth-child(even) { background: #f9fafb; }
+
+    .page-break { page-break-before: always; }
+
+    /* URL callout */
+    .url-box {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 6px;
+      padding: 10px 14px;
+      text-align: center;
+      margin: 12px 0;
+      font-size: 12pt;
+    }
+    .url-box code {
+      font-weight: 700;
+      color: #1e40af;
+    }
+
+    .footer {
+      margin-top: 24px;
+      padding-top: 12px;
+      border-top: 1px solid #d1d5db;
+      text-align: center;
+      font-size: 9pt;
+      color: #6b7280;
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Lead Volunteer Guide</h1>
+  <p>St. Mark Legacy Food Pantry &mdash; Dashboard &amp; Session Management</p>
+</div>
+
+<div class="url-box">
+  Dashboard: <code>st-mark-pantry.vercel.app</code><br>
+  Password: <code>stmark</code>
+</div>
+
+<h2>1. Getting Started</h2>
+
+<h3>Opening the Dashboard</h3>
+<div class="step-box">
+  <span class="step-num">1.</span> On your phone or Chromebook, open the browser and go to <strong>st-mark-pantry.vercel.app</strong><br>
+  <span class="step-num">2.</span> Enter the password: <strong>stmark</strong><br>
+  <span class="step-num">3.</span> You'll see the Dashboard with today's stats and quick action buttons
+</div>
+
+<div class="tip">
+  <strong>Tip:</strong> On your phone, tap "Add to Home Screen" (in the browser menu) to make it feel like a regular app. You only enter the password once per device.
+</div>
+
+<h3>Bottom Navigation Bar</h3>
+<p>Five tabs at the bottom of every screen:</p>
+<table>
+  <tr><th>Tab</th><th>What It Does</th></tr>
+  <tr><td><strong>Home</strong></td><td>Dashboard — today's stats, recent check-ins, quick actions</td></tr>
+  <tr><td><strong>Clients</strong></td><td>View, search, add, and edit client records</td></tr>
+  <tr><td><strong>Check-In</strong></td><td>Check in clients during a pantry session</td></tr>
+  <tr><td><strong>Reports</strong></td><td>Monthly stats, inactive clients report</td></tr>
+  <tr><td><strong>Settings</strong></td><td>Data backup, cloud sync, feature toggles</td></tr>
+</table>
+
+<h2>2. Before a Session</h2>
+
+<h3>Adding New Clients</h3>
+<div class="step-box">
+  <span class="step-num">1.</span> Tap <span class="nav-ref">Clients</span> &rarr; <strong>Add Client</strong> (top right) — or use the green <strong>+</strong> button on the Check-In page<br>
+  <span class="step-num">2.</span> Enter: First Name, Last Name, Family Size (required)<br>
+  <span class="step-num">3.</span> Optional: phone, email, address, family members, notes<br>
+  <span class="step-num">4.</span> Set "Accepts Perishable Foods" to No if the client declines perishables<br>
+  <span class="step-num">5.</span> Tap <strong>Save</strong>
+</div>
+
+<h3>Reviewing the Volunteer Schedule</h3>
+<div class="step-box">
+  <span class="step-num">1.</span> Tap <span class="nav-ref">Home</span> &rarr; <strong>Volunteers</strong> quick action<br>
+  <span class="step-num">2.</span> Tap <strong>Schedule</strong> (top of volunteer list)<br>
+  <span class="step-num">3.</span> See who's signed up for upcoming sessions — each date shows the volunteers and their roles
+</div>
+
+<div class="page-break"></div>
+
+<h2>3. During a Session — Client Check-In</h2>
+
+<p>This is the main workflow you'll use during each Monday, Friday, or Saturday session.</p>
+
+<div class="step-box">
+  <span class="step-num">1.</span> Tap <span class="nav-ref">Check-In</span> in the bottom nav<br>
+  <span class="step-num">2.</span> Select the correct day pill: <strong>Monday</strong>, <strong>Friday</strong>, or <strong>Saturday</strong> (auto-detects if today is a pantry day)<br>
+  <span class="step-num">3.</span> Enter your name in the "Served by" field (optional, tracks who helped each client)<br>
+  <span class="step-num">4.</span> As each client arrives, <strong>type the first few letters of their name</strong> in the search box<br>
+  <span class="step-num">5.</span> Tap the green <strong>Check In</strong> button next to the client's name<br>
+  <span class="step-num">6.</span> The client appears in the "Today's Visitors" list at the bottom
+</div>
+
+<div class="tip">
+  <strong>Duplicate Warning:</strong> If a client already visited this month, you'll see a yellow warning. You can still check them in — just tap "Check In Anyway" to confirm.
+</div>
+
+<h3>If a Client Isn't in the System</h3>
+<div class="step-box">
+  <span class="step-num">1.</span> Tap the green <strong>+</strong> button (bottom right of Check-In screen)<br>
+  <span class="step-num">2.</span> Fill in their info and save<br>
+  <span class="step-num">3.</span> Return to Check-In — search their name and check them in
+</div>
+
+<h3>What You'll See</h3>
+<table>
+  <tr><th>Element</th><th>Meaning</th></tr>
+  <tr><td>Green <strong>Check In</strong> button</td><td>Client hasn't been checked in today — tap to check in</td></tr>
+  <tr><td>Gray <strong>Done</strong> button</td><td>Already checked in today</td></tr>
+  <tr><td>Yellow <strong>Visited [date]</strong> badge</td><td>Client visited earlier this month (can still check in)</td></tr>
+  <tr><td><strong>No Perishables</strong> badge</td><td>Don't include perishable items for this client</td></tr>
+</table>
+
+<h2>4. Managing Volunteers</h2>
+
+<h3>Adding a Volunteer</h3>
+<div class="step-box">
+  <span class="step-num">1.</span> Tap <span class="nav-ref">Home</span> &rarr; <strong>Volunteers</strong><br>
+  <span class="step-num">2.</span> Tap <strong>Add</strong> (top right)<br>
+  <span class="step-num">3.</span> Enter name, email (for reminders), phone, and recurring schedule<br>
+  <span class="step-num">4.</span> Set recurring slots like "Every Monday" or "2nd Saturday" for regular volunteers
+</div>
+
+<div class="tip">
+  <strong>Note:</strong> Volunteers who sign up through the public website (<strong>st-mark-pantry.vercel.app/site/volunteer.html</strong>) are automatically saved to the cloud. Use <strong>Settings &rarr; Sync from Cloud</strong> to pull them into the dashboard.
+</div>
+
+<h3>Volunteer Check-In (During a Session)</h3>
+<div class="step-box">
+  <span class="step-num">1.</span> Tap <span class="nav-ref">Home</span> &rarr; <strong>Volunteers</strong> &rarr; <strong>Check In</strong><br>
+  <span class="step-num">2.</span> Search the volunteer's name<br>
+  <span class="step-num">3.</span> Select their role (Intake, Distribution, Setup, Cleanup, etc.)<br>
+  <span class="step-num">4.</span> Tap <strong>Check In</strong>
+</div>
+
+<h2>5. After a Session</h2>
+
+<h3>Reviewing Reports</h3>
+<div class="step-box">
+  <span class="step-num">1.</span> Tap <span class="nav-ref">Reports</span> in the bottom nav<br>
+  <span class="step-num">2.</span> See monthly client counts, visit totals, and trends<br>
+  <span class="step-num">3.</span> Tap <strong>Inactive Clients</strong> to see who hasn't visited this month
+</div>
+
+<h3>Backing Up Data</h3>
+<div class="step-box">
+  <span class="step-num">1.</span> Tap <span class="nav-ref">Settings</span><br>
+  <span class="step-num">2.</span> Tap <strong>Export All Data (JSON)</strong> — saves a backup file to your device<br>
+  <span class="step-num">3.</span> To restore: tap <strong>Import Data (JSON)</strong> and select the backup file
+</div>
+
+<div class="tip">
+  <strong>Important:</strong> All data is stored on your device. If you clear browser data, it's gone. <strong>Export a backup regularly</strong> (weekly is ideal).
+</div>
+
+<div class="page-break"></div>
+
+<h2>6. Cloud Sync</h2>
+
+<h3>Pushing Volunteers to Cloud</h3>
+<p>This enables automated reminder emails 3 days before each session.</p>
+<div class="step-box">
+  <span class="step-num">1.</span> Tap <span class="nav-ref">Settings</span><br>
+  <span class="step-num">2.</span> Turn on <strong>Enable Notifications</strong><br>
+  <span class="step-num">3.</span> Tap <strong>Sync All Volunteers to Cloud</strong>
+</div>
+
+<h3>Pulling from Cloud (New Public Signups)</h3>
+<div class="step-box">
+  <span class="step-num">1.</span> Tap <span class="nav-ref">Settings</span><br>
+  <span class="step-num">2.</span> Ensure <strong>Enable Notifications</strong> is on<br>
+  <span class="step-num">3.</span> Tap <strong>Sync from Cloud</strong><br>
+  <span class="step-num">4.</span> New volunteers and signups from the website will appear in the dashboard
+</div>
+
+<h2>7. Quick Reference</h2>
+
+<table>
+  <tr><th>Task</th><th>Where</th></tr>
+  <tr><td>Check in a client</td><td><span class="nav-ref">Check-In</span> &rarr; search name &rarr; tap Check In</td></tr>
+  <tr><td>Register a new client</td><td><span class="nav-ref">Clients</span> &rarr; Add Client (or + button on Check-In)</td></tr>
+  <tr><td>Edit a client</td><td><span class="nav-ref">Clients</span> &rarr; tap client &rarr; Edit</td></tr>
+  <tr><td>Check in a volunteer</td><td><span class="nav-ref">Home</span> &rarr; Volunteers &rarr; Check In</td></tr>
+  <tr><td>View volunteer schedule</td><td><span class="nav-ref">Home</span> &rarr; Volunteers &rarr; Schedule</td></tr>
+  <tr><td>View who signed up from website</td><td><span class="nav-ref">Settings</span> &rarr; Sync from Cloud</td></tr>
+  <tr><td>Back up data</td><td><span class="nav-ref">Settings</span> &rarr; Export All Data</td></tr>
+  <tr><td>View reports</td><td><span class="nav-ref">Reports</span></td></tr>
+  <tr><td>Share signup link with volunteers</td><td>Send: <strong>st-mark-pantry.vercel.app/site/volunteer.html</strong></td></tr>
+</table>
+
+<h2>8. Distribution Schedule</h2>
+
+<table>
+  <tr><th>Day</th><th>Time</th><th>Activity</th></tr>
+  <tr><td>Monday</td><td>5:00 PM &ndash; 7:00 PM</td><td>Food distribution</td></tr>
+  <tr><td>Friday</td><td>10:00 AM &ndash; 12:00 PM</td><td>Food distribution</td></tr>
+  <tr><td>Saturday</td><td>8:30 AM</td><td>Trader Joe's pickup</td></tr>
+  <tr><td>Saturday</td><td>9:00 AM</td><td>Unloading at St. Mark</td></tr>
+</table>
+
+<div class="footer">
+  St. Mark Legacy Food Pantry &mdash; 601 Braker Lane, Austin, TX<br>
+  Questions? Contact Wilson at wilson@covenantaustin.org
+</div>
+
+</body>
+</html>
