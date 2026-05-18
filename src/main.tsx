@@ -6,8 +6,12 @@ import { SpeedInsights } from '@vercel/speed-insights/react'
 import { Toaster } from 'sonner'
 import { SettingsProvider } from './contexts/SettingsContext'
 import { ensureSeedData } from './lib/seed-data'
+import { primeDemoEnv } from './lib/demo'
 import { App } from './App'
 import './index.css'
+
+// Must run before SettingsProvider reads localStorage (no-op unless demo).
+primeDemoEnv()
 
 void ensureSeedData().catch((err) => {
   console.error('Failed to seed compliance data:', err)

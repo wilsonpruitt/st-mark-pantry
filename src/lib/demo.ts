@@ -26,6 +26,24 @@ export function isDemoMode(): boolean {
   return sessionStorage.getItem('pantry-demo') === '1'
 }
 
+// Fictional pantry shown throughout the demo (one place to rename it).
+export const DEMO_PANTRY_NAME = 'Riverside Community Pantry'
+
+// Synchronous demo priming — MUST run before React renders so SettingsProvider
+// (which reads localStorage once at mount) and the header show the demo name
+// from the first paint, not the real St. Mark name. Heavy Dexie reseed stays
+// async in ensureDemoSeed(). No-op unless demo mode.
+export function primeDemoEnv(): void {
+  if (!isDemoMode()) return
+  saveSettings({
+    ...DEFAULT_SETTINGS,
+    pantryName: DEMO_PANTRY_NAME,
+    complianceMode: 'standalone',
+  })
+  localStorage.setItem(AUTH_KEY, 'true') // bypass the device gate (no server)
+  document.title = DEMO_PANTRY_NAME
+}
+
 // Recent real Mon/Fri/Sat dates (the pantry's serving days), newest first.
 function recentPantryDates(count: number): { date: string; dayOfWeek: PantryDay }[] {
   const map: Record<number, PantryDay> = { 1: 'Monday', 5: 'Friday', 6: 'Saturday' }
@@ -158,12 +176,5 @@ export async function ensureDemoSeed(): Promise<void> {
       await db.volunteerShifts.bulkAdd(shifts)
     },
   )
-
-  // Generic demo identity + bypass the device gate (no server / no api key).
-  saveSettings({
-    ...DEFAULT_SETTINGS,
-    pantryName: 'Riverside Community Pantry',
-    complianceMode: 'standalone',
-  })
-  localStorage.setItem(AUTH_KEY, 'true')
+  // Identity / gate bypass is handled synchronously by primeDemoEnv() in main.tsx.
 }
