@@ -1,0 +1,59 @@
+\usepackage{fontspec}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{parskip}
+\usepackage{multicol}
+\usepackage[margin=0.78in]{geometry}
+
+\definecolor{fen}{HTML}{2C3E4A}
+\definecolor{fenmist}{HTML}{5B6B76}
+\definecolor{ink}{HTML}{1A2128}
+\definecolor{reed}{HTML}{C9A86A}
+\definecolor{reeddeep}{HTML}{A98748}
+\definecolor{parchment}{HTML}{F7F3EC}
+\definecolor{ivory}{HTML}{FBF8F1}
+\definecolor{slateline}{HTML}{D6D0C2}
+\definecolor{slate600}{HTML}{54595E}
+
+\setmainfont{EBGaramond-VF.ttf}[Path=/Users/wilsonpruitt/wroot-labs/brand/design-system/fonts/, ItalicFont=EBGaramond-Italic-VF.ttf, AutoFakeBold=2.2]
+\newfontfamily\interfont{Inter-VF.ttf}[Path=/Users/wilsonpruitt/wroot-labs/brand/design-system/fonts/, AutoFakeBold=2]
+
+\pagecolor{parchment}
+\color{ink}
+\setlength{\parskip}{2.5pt}
+\pagestyle{empty}
+
+\makeatletter
+\renewcommand\section{\@startsection{section}{1}{\z@}{8pt plus 2pt minus 2pt}{3pt}{\interfont\bfseries\large\color{fen}}}
+\makeatother
+
+\newcommand{\eyebrow}[1]{{\interfont\footnotesize\bfseries\color{reeddeep}\MakeUppercase{#1}}}
+
+% Masthead: Wroot Labs wordmark, reed rule, product title, tagline, eyebrow.
+\newcommand{\masthead}{%
+  \thispagestyle{empty}%
+  \noindent{\fontsize{30}{34}\selectfont\color{fen}Wroot\,{\itshape\color{fenmist}Labs}}\par
+  \vspace{4pt}\noindent{\color{reed}\rule{\linewidth}{2pt}}\par
+  \vspace{8pt}\noindent{\interfont\fontsize{27}{31}\selectfont\bfseries\color{fen}Cupboard}\par
+  \vspace{3pt}\noindent{\interfont\large\color{slate600}A quiet tracker for the work of feeding people}\par
+  \vspace{5pt}\noindent\eyebrow{Software for small feeding ministries · Beta opens late 2026}\par
+  \vspace{4pt}}
+
+\newcommand{\brandfooter}{%
+  \par\vspace{10pt}\noindent{\color{slateline}\rule{\linewidth}{0.4pt}}\par
+  \vspace{2pt}\noindent{\interfont\footnotesize\color{slate600}Cupboard is built by Wroot Labs LLC \textperiodcentered\ wrootlabs.com}}
+
+\newcommand{\pullquote}[1]{%
+  \par\smallskip\noindent
+  \begin{tikzpicture}
+    \node[fill=ivory, inner sep=9pt, text width=\dimexpr\linewidth-18pt-4pt\relax, align=left] (pq) {\itshape\color{fen} #1};
+    \draw[reed, line width=3pt] ([xshift=1.5pt]pq.north west) -- ([xshift=1.5pt]pq.south west);
+  \end{tikzpicture}\par\smallskip}
+
+\setlength{\columnsep}{24pt}
+\renewcommand{\arraystretch}{1.2}
+
+\AtBeginDocument{\hypersetup{colorlinks=true, linkcolor=reeddeep, urlcolor=reeddeep}}
