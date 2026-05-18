@@ -18,6 +18,8 @@ import { InactiveClientsPage } from '@/components/reports/InactiveClientsPage'
 import { SettingsPage } from '@/components/settings/SettingsPage'
 import { VolunteerGuide } from '@/components/guide/VolunteerGuide'
 import { QRPrintPage } from '@/components/guide/QRPrintPage'
+import { TenantAuthGate } from '@/components/auth/TenantAuthGate'
+import { isDemoMode, ensureDemoSeed } from '@/lib/demo'
 
 class ErrorBoundary extends Component<{ children: React.ReactNode }, { error: Error | null }> {
   state: { error: Error | null } = { error: null }
@@ -130,8 +132,29 @@ function LoginGate({ children }: { children: React.ReactNode }) {
   )
 }
 
+function DemoGate({ children }: { children: React.ReactNode }) {
+  const [demo] = useState(() => isDemoMode())
+  const [ready, setReady] = useState(!demo)
+  useEffect(() => {
+    if (!demo) return
+    let cancelled = false
+    ensureDemoSeed().finally(() => { if (!cancelled) setReady(true) })
+    return () => { cancelled = true }
+  }, [demo])
+  if (!demo) return <>{children}</>
+  if (!ready) {
+    return (
+      <div className="flex min-h-svh items-center justify-center bg-muted p-4">
+        <p className="text-sm text-muted-foreground">Loading demo…</p>
+      </div>
+    )
+  }
+  return <>{children}</>
+}
+
 function SyncProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
+    if (isDemoMode()) return; // demo is local-only — never sync to production
     syncEngine.sync().catch(() => {});
     syncEngine.startPolling(30_000);
     return () => syncEngine.stopPolling();
@@ -142,6 +165,8 @@ function SyncProvider({ children }: { children: React.ReactNode }) {
 export function App() {
   return (
     <ErrorBoundary>
+    <DemoGate>
+    <TenantAuthGate>
     <LoginGate>
     <SyncProvider>
     <Routes>
@@ -169,6 +194,8 @@ export function App() {
     </Routes>
     </SyncProvider>
     </LoginGate>
+    </TenantAuthGate>
+    </DemoGate>
     </ErrorBoundary>
   )
 }

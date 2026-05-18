@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { getResend } from '../lib/resend.js';
+import { getSupabase } from '../lib/supabase.js';
 
 interface InterestBody {
   name?: string;
@@ -40,6 +41,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     </div>
   `;
 
+  let emailed = false;
+  let emailError: unknown = null;
   try {
     const { error } = await getResend().emails.send({
       from: 'Cupboard waitlist <reports@stmarklegacy.org>',
@@ -48,13 +51,31 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       subject: `Cupboard waitlist: ${name}${organization ? ' — ' + organization : ''}`,
       html,
     });
-    if (error) {
-      console.error('Resend error:', error);
-      return res.status(502).json({ error: 'Email service failed' });
-    }
-    return res.status(200).json({ ok: true });
+    if (error) emailError = error;
+    else emailed = true;
   } catch (err) {
-    console.error('cupboard-interest error:', err);
-    return res.status(500).json({ error: 'Internal server error' });
+    emailError = err;
   }
+
+  // Durable lead capture — best-effort, never blocks the response so a transient
+  // DB hiccup can't drop a signup the user already submitted.
+  try {
+    const { error } = await getSupabase().from('cupboard_interest').insert({
+      name,
+      email,
+      organization: organization || null,
+      program: program || null,
+      notes: notes || null,
+      emailed,
+    });
+    if (error) console.error('cupboard_interest insert error:', error);
+  } catch (err) {
+    console.error('cupboard_interest insert threw:', err);
+  }
+
+  if (emailError) {
+    console.error('Resend error:', emailError);
+    return res.status(502).json({ error: 'Email service failed' });
+  }
+  return res.status(200).json({ ok: true });
 }
