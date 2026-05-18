@@ -16,6 +16,7 @@ import { VolunteerCalendar } from '@/components/volunteers/VolunteerCalendar'
 import { ReportsPage } from '@/components/reports/ReportsPage'
 import { InactiveClientsPage } from '@/components/reports/InactiveClientsPage'
 import { SettingsPage } from '@/components/settings/SettingsPage'
+import { DuplicateClientsPage } from '@/components/settings/DuplicateClientsPage'
 import { VolunteerGuide } from '@/components/guide/VolunteerGuide'
 import { QRPrintPage } from '@/components/guide/QRPrintPage'
 import { TenantAuthGate } from '@/components/auth/TenantAuthGate'
@@ -189,6 +190,7 @@ export function App() {
         <Route path="guide" element={<VolunteerGuide />} />
         <Route path="qr-print" element={<QRPrintPage />} />
         <Route path="settings" element={<SettingsPage />} />
+        <Route path="settings/duplicates" element={<DuplicateClientsPage />} />
         <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>

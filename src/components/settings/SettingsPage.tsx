@@ -1,6 +1,9 @@
 import { useRef, useState } from 'react'
-import { Download, Upload, FileSpreadsheet, Info, Package, Bell, Cloud, RefreshCw, Store } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { useLiveQuery } from 'dexie-react-hooks'
+import { Download, Upload, FileSpreadsheet, Info, Package, Bell, Cloud, RefreshCw, Store, Users } from 'lucide-react'
 import { db } from '@/db/database'
+import { findDuplicateGroups } from '@/lib/dedupe'
 import { exportMultiSheetExcel } from '@/lib/excel'
 import { useSettings } from '@/contexts/SettingsContext'
 import { syncEngine } from '@/lib/sync-engine'
@@ -27,6 +30,8 @@ export function SettingsPage() {
   const [importing, setImporting] = useState(false)
   const [syncing, setSyncing] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const allClients = useLiveQuery(() => db.clients.toArray(), [])
+  const duplicateGroupCount = allClients ? findDuplicateGroups(allClients).length : 0
 
   const showMessage = (type: 'success' | 'error', text: string) => {
     setMessage({ type, text })
@@ -327,6 +332,32 @@ export function SettingsPage() {
               }
             />
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Duplicate clients */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="size-4" />
+            Duplicate clients
+          </CardTitle>
+          <CardDescription>
+            Find clients registered more than once and merge them — visits move to the
+            kept record, blank fields are filled in from the other.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button asChild variant="outline" className="w-full justify-between">
+            <Link to="/settings/duplicates">
+              <span>Review duplicates</span>
+              <span className="text-muted-foreground">
+                {duplicateGroupCount === 0
+                  ? 'None found'
+                  : `${duplicateGroupCount} set${duplicateGroupCount === 1 ? '' : 's'}`}
+              </span>
+            </Link>
+          </Button>
         </CardContent>
       </Card>
 
